@@ -1,0 +1,964 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>多模态工具 · 管理后台</title>
+<style>
+:root{
+  --blue:#1D4ED8; --blue2:#1E40AF; --blue-bg:#EFF4FF; --line:#E7EAF0; --sub:#6B7280; --text:#1F2430;
+  --bg:#F5F6FA; --card:#fff; --green:#16A34A; --red:#DC2626; --orange:#D97706;
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{font-family:"PingFang SC","Microsoft YaHei",-apple-system,sans-serif;background:var(--bg);color:var(--text);font-size:13px;}
+button{font-family:inherit;cursor:pointer;border:none;background:none;color:inherit;font-size:13px;}
+input,select{font-family:inherit;font-size:13px;}
+
+/* ===== 登录页 ===== */
+#view-login{position:fixed;inset:0;background:linear-gradient(135deg,#EEF3FF 0%,#F5F6FA 55%,#EAF2FF 100%);display:flex;align-items:center;justify-content:center;}
+.login-card{width:400px;background:#fff;border-radius:14px;padding:38px 40px 32px;box-shadow:0 18px 50px rgba(29,78,216,.10);}
+.login-logo{display:flex;align-items:center;gap:10px;margin-bottom:6px;}
+.login-logo .lic{width:38px;height:38px;border-radius:10px;background:var(--blue);color:#fff;display:flex;align-items:center;justify-content:center;}
+.login-title{font-size:19px;font-weight:700;}
+.login-sub{font-size:12px;color:var(--sub);margin-bottom:24px;}
+.login-card label{display:block;font-size:12px;color:var(--sub);margin:14px 0 6px;}
+.login-card input{width:100%;height:40px;border:1px solid var(--line);border-radius:8px;padding:0 12px;font-size:14px;}
+.login-card input:focus{outline:none;border-color:var(--blue);box-shadow:0 0 0 3px rgba(29,78,216,.10);}
+.login-go{width:100%;height:42px;background:var(--blue);color:#fff;border-radius:8px;font-size:14px;font-weight:600;margin-top:24px;}
+.login-go:hover{background:var(--blue2);}
+.login-tip{font-size:11px;color:#9CA3AF;text-align:center;margin-top:14px;}
+
+/* ===== 后台框架 ===== */
+.admin{display:flex;min-height:100vh;}
+.sidebar{width:212px;background:#fff;border-right:1px solid var(--line);display:flex;flex-direction:column;position:fixed;top:0;bottom:0;left:0;z-index:20;}
+.side-logo{display:flex;align-items:center;gap:9px;padding:16px 18px;border-bottom:1px solid var(--line);}
+.side-logo .lic{width:30px;height:30px;border-radius:8px;background:var(--blue);color:#fff;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+.side-logo b{font-size:15px;}
+.side-logo span{display:block;font-size:10px;color:var(--sub);font-weight:400;}
+.side-nav{flex:1;padding:10px 0;overflow-y:auto;}
+.nav-item{display:flex;align-items:center;gap:10px;padding:11px 20px;font-size:13px;color:#3B4252;cursor:pointer;border-left:3px solid transparent;}
+.nav-item:hover{background:#F4F6FB;}
+.nav-item.active{background:var(--blue-bg);color:var(--blue);font-weight:600;border-left-color:var(--blue);}
+.nav-item .nicon{width:18px;height:18px;flex-shrink:0;}
+.side-foot{padding:12px 18px;border-top:1px solid var(--line);font-size:11px;color:#9CA3AF;}
+
+.main{margin-left:212px;flex:1;min-width:0;}
+.topbar{height:56px;background:#fff;border-bottom:1px solid var(--line);display:flex;align-items:center;justify-content:space-between;padding:0 24px;position:sticky;top:0;z-index:10;}
+.crumb{font-size:14px;font-weight:600;}
+.crumb .c2{color:var(--sub);font-weight:400;margin-left:6px;font-size:13px;}
+.tb-user{display:flex;align-items:center;gap:9px;}
+.ava{width:30px;height:30px;border-radius:50%;background:var(--blue);color:#fff;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:600;}
+.tb-user .un{font-size:13px;font-weight:600;}
+.tb-user .urole{font-size:11px;color:var(--sub);}
+.content{padding:14px 24px 24px;width:100%;}
+
+/* ===== 通用组件 ===== */
+.panel{background:#fff;border:1px solid var(--line);border-radius:10px;margin-bottom:18px;}
+.panel-hd{display:flex;align-items:center;justify-content:space-between;padding:13px 18px;border-bottom:1px solid var(--line);}
+.panel-hd b{font-size:14px;}
+.panel-bd{padding:16px 18px;}
+.btn{border:1px solid var(--line);border-radius:7px;padding:6px 14px;font-size:13px;color:#374151;background:#fff;}
+.btn:hover{border-color:#C3CBD9;}
+.btn.primary{background:var(--blue);border-color:var(--blue);color:#fff;font-weight:600;}
+.btn.primary:hover{background:var(--blue2);}
+.btn.link{color:var(--blue);border:none;padding:3px 6px;font-size:13px;}
+.btn.link.danger{color:var(--red);}
+.btn.sm{padding:4px 10px;font-size:12px;}
+.input,.sel{height:32px;border:1px solid var(--line);border-radius:7px;padding:0 10px;font-size:13px;background:#fff;min-width:150px;}
+.input:focus,.sel:focus{outline:none;border-color:var(--blue);}
+.toolbar{display:flex;align-items:center;gap:10px;flex-wrap:wrap;}
+.search{display:flex;align-items:center;gap:8px;}
+.search .input{min-width:200px;}
+.tag{display:inline-block;font-size:11px;padding:2px 9px;border-radius:20px;background:#F0F2F7;color:#4B5563;}
+.tag.blue{background:var(--blue-bg);color:var(--blue);}
+.tag.green{background:#E7F6EC;color:var(--green);}
+.tag.red{background:#FDECEC;color:var(--red);}
+.tag.orange{background:#FEF3E2;color:var(--orange);}
+.tag.gray{background:#F0F2F7;color:#6B7280;}
+.tag.purple{background:#F1EBFE;color:#7C3AED;}
+
+/* 统计卡 */
+.statgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(168px,1fr));gap:14px;margin-bottom:10px;}
+.stat{background:#fff;border:1px solid var(--line);border-radius:10px;padding:13px 16px;}
+.stat .k{font-size:11.5px;color:var(--sub);}
+.stat .v{font-size:20px;font-weight:700;margin-top:5px;}
+.stat .d{font-size:11px;color:#9CA3AF;margin-top:4px;}
+.stat.blue{border-top:3px solid var(--blue);}
+.stat.green{border-top:3px solid var(--green);}
+.stat.orange{border-top:3px solid var(--orange);}
+.stat.purple{border-top:3px solid #7C3AED;}
+
+/* 表格 */
+.tbl-wrap{overflow-x:auto;}
+table.tbl{width:100%;border-collapse:collapse;font-size:13px;}
+.tbl th{background:#F8F9FC;color:#5B6472;font-weight:600;text-align:left;padding:10px 12px;border-bottom:1px solid var(--line);white-space:nowrap;font-size:12px;}
+.tbl td{padding:11px 12px;border-bottom:1px solid #F0F2F7;vertical-align:middle;}
+.tbl tr:hover td{background:#FAFBFF;}
+.tbl .thumb{width:54px;height:40px;border-radius:6px;object-fit:cover;}
+.tbl .ph{width:54px;height:40px;border-radius:6px;display:inline-block;}
+.pager{display:flex;align-items:center;justify-content:flex-end;gap:6px;padding:12px 16px;font-size:12px;color:var(--sub);}
+.pager button{min-width:28px;height:28px;border:1px solid var(--line);border-radius:6px;background:#fff;font-size:12px;}
+.pager button.on{background:var(--blue);color:#fff;border-color:var(--blue);}
+.pager button:disabled{opacity:.4;cursor:not-allowed;}
+.page-info{color:#6B7280;margin-right:8px;}
+
+/* 官方资源管理 · 一级/二级子tab */
+.rtabs{display:flex;gap:4px;border-bottom:2px solid var(--line);margin-bottom:12px;}
+.rtabs button{font-size:13px;padding:8px 18px;color:var(--sub);border-bottom:2px solid transparent;margin-bottom:-2px;background:none;}
+.rtabs button:hover{color:var(--blue);}
+.rtabs button.active{color:var(--blue);border-color:var(--blue);font-weight:700;}
+.rtabs2{display:flex;gap:6px;margin-bottom:12px;}
+.rtabs2 button{font-size:12px;padding:5px 16px;color:var(--sub);border:1px solid var(--line);border-radius:7px;background:#fff;}
+.rtabs2 button:hover{border-color:var(--blue);color:var(--blue);}
+.rtabs2 button.active{background:var(--blue);color:#fff;border-color:var(--blue);font-weight:600;}
+
+/* 状态开关按钮 */
+.switch{position:relative;width:36px;height:20px;border-radius:999px;background:#D3DAE4;display:inline-block;cursor:pointer;transition:background .2s;border:none;padding:0;vertical-align:middle;}
+.switch::after{content:"";position:absolute;top:2px;left:2px;width:16px;height:16px;border-radius:50%;background:#fff;transition:left .2s;box-shadow:0 1px 2px rgba(0,0,0,.15);}
+.switch.on{background:#2F6BFF;}
+.switch.on::after{left:18px;}
+
+/* 弹窗 */
+.modal{position:fixed;inset:0;background:rgba(15,20,30,.45);display:none;align-items:center;justify-content:center;z-index:100;}
+.modal.open{display:flex;}
+.dialog{background:#fff;border-radius:12px;width:460px;max-width:92vw;max-height:86vh;overflow:auto;box-shadow:0 20px 60px rgba(0,0,0,.18);}
+.dialog-hd{display:flex;align-items:center;justify-content:space-between;padding:15px 20px;border-bottom:1px solid var(--line);font-weight:600;font-size:14px;}
+.dialog-hd .x{cursor:pointer;color:#9CA3AF;font-size:18px;padding:2px 6px;}
+.dialog-bd{padding:20px;}
+.dialog-ft{display:flex;justify-content:flex-end;gap:10px;padding:14px 20px;border-top:1px solid var(--line);}
+.dform label{display:block;font-size:12px;color:var(--sub);margin:12px 0 5px;}
+.dform .input,.dform .sel{width:100%;min-width:0;height:36px;}
+.dform textarea{width:100%;min-height:64px;border:1px solid var(--line);border-radius:7px;padding:8px 10px;font-family:inherit;font-size:13px;resize:vertical;}
+.dform .lic{display:flex;gap:14px;flex-wrap:wrap;margin-top:4px;}
+.dform .chk{display:inline-flex;align-items:center;gap:5px;font-size:12px;color:var(--text);cursor:pointer;}
+.dform .chk input{accent-color:var(--blue);}
+.frow{display:flex;gap:10px;}
+.frow>div{flex:1;}
+
+/* 首页图表 */
+.chart-card{background:#fff;border:1px solid var(--line);border-radius:10px;padding:16px 18px;}
+.hourbars{display:flex;align-items:flex-end;gap:4px;height:112px;padding-top:8px;}
+.hourbars .hb{flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;}
+.hourbars .bar{width:100%;max-width:22px;border-radius:3px 3px 0 0;background:linear-gradient(180deg,#5B8DEF,#1D4ED8);min-height:2px;}
+.hourbars .lbl{font-size:9px;color:#9CA3AF;}
+.trend2{display:grid;grid-template-columns:1fr 1fr;gap:16px;}
+.gstats{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;}
+.gstat{background:#F8F9FC;border:1px solid var(--line);border-radius:8px;padding:12px 14px;}
+.gstat .k{font-size:11px;color:var(--sub);}
+.gstat .v{font-size:18px;font-weight:700;margin-top:4px;}
+
+/* 生图/训练记录列表 */
+.rlist{}
+.ritem{display:flex;align-items:center;gap:14px;padding:13px 18px;border-bottom:1px solid #F0F2F7;}
+.ritem:hover{background:#FAFBFF;}
+.ritem .rid{font-family:Consolas,monospace;font-size:12px;color:#5B6472;background:#F0F2F7;border-radius:5px;padding:2px 8px;}
+.ritem .rtime{font-size:12px;color:var(--sub);}
+.ritem .rwho{min-width:110px;}
+.ritem .rwhy{font-size:11px;color:var(--red);background:#FDECEC;border-radius:5px;padding:4px 8px;max-width:380px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.radd{margin-left:auto;display:flex;align-items:center;gap:12px;}
+
+/* ===== 账号下拉 ===== */
+.user-box{position:relative;cursor:pointer;}
+.user-main{display:flex;align-items:center;gap:9px;padding:5px 8px;border-radius:9px;}
+.user-main:hover{background:#F5F7FB;}
+.user-main .carat{width:10px;height:10px;color:#9CA3AF;transition:transform .15s;}
+.user-box.open .carat{transform:rotate(180deg);}
+.user-menu{position:absolute;top:48px;right:0;width:150px;background:#fff;border:1px solid var(--line);border-radius:10px;box-shadow:0 14px 38px rgba(15,20,30,.13);z-index:60;display:none;padding:6px;}
+.user-menu.open{display:block;}
+.um-item{padding:9px 12px;font-size:13px;border-radius:7px;color:#374151;cursor:pointer;}
+.um-item:hover{background:var(--blue-bg);color:var(--blue);}
+
+/* 性能统计 */
+.perf2{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:10px;}
+.perf{background:#fff;border:1px solid var(--line);border-radius:10px;padding:14px 16px 13px;height:174px;display:flex;flex-direction:column;box-sizing:border-box;}
+.perf .pt{font-size:13px;font-weight:600;margin-bottom:9px;flex-shrink:0;}
+.pcols{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;flex:1;align-content:center;}
+.pcol{background:#F8F9FC;border:1px solid var(--line);border-radius:8px;padding:9px 11px;}
+.pcol .k{font-size:10.5px;color:var(--sub);}
+.pcol .v{font-size:16px;font-weight:700;margin-top:3px;}
+.pcol .v.red{color:var(--red);} .pcol .v.green{color:var(--green);} .pcol .v.orange{color:var(--orange);}
+.prates{display:flex;gap:14px;flex-wrap:wrap;margin-top:auto;padding-top:10px;font-size:11px;color:#4B5563;flex-shrink:0;}
+.prates span b{font-weight:600;}
+.prates .ok{color:var(--green);} .prates .no{color:var(--red);} .prates .cc{color:var(--orange);}
+.prates .avg{margin-left:auto;color:var(--sub);}
+.pstat{display:flex;align-items:flex-start;gap:18px;}
+.plegend{display:flex;flex-direction:column;gap:8px;min-width:128px;padding-top:6px;}
+.plegend .li{display:flex;align-items:center;gap:7px;font-size:12px;color:#374151;}
+.plegend .li i{width:9px;height:9px;border-radius:3px;display:inline-block;flex-shrink:0;}
+.plegend .li b{margin-left:auto;font-size:12px;}
+
+/* 热门模型柱状图 */
+.hotchart{display:flex;flex-direction:column;flex:1;min-width:0;height:230px;}
+.hot-row{display:flex;height:230px;min-height:0;align-items:stretch;}
+.hot-y{display:flex;flex-direction:column;justify-content:space-between;font-size:10px;color:#9CA3AF;padding:0 8px 0 0;text-align:right;flex-shrink:0;}
+.hot-bars{flex:1;display:flex;align-items:flex-end;gap:26px;padding:0 24px;border-bottom:1px solid var(--line);position:relative;min-width:0;}
+.hot-bar{flex:1;max-width:120px;display:flex;flex-direction:column;align-items:center;gap:6px;min-width:0;}
+.hot-bar .bv{font-size:12px;font-weight:700;color:#1F2430;}
+.hot-bar .bnm{font-size:11px;color:var(--sub);margin-top:2px;white-space:nowrap;}
+</style>
+</head>
+<body>
+
+<!-- ===== 登录页 ===== -->
+<section id="view-login">
+  <div class="login-card">
+    <div class="login-logo">
+      <span class="lic"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg></span>
+      <div><div class="login-title">多模态工具 · 管理后台</div></div>
+    </div>
+    <div class="login-sub">供应链数据智能及多模态工具集 · 管理员入口</div>
+    <label>账号</label><input id="lgAcc" value="admin">
+    <label>密码</label><input id="lgPwd" type="password" value="123456">
+    <button class="login-go" id="lgGo">登 录</button>
+    <div class="login-tip">演示环境：管理员账号 admin / 123456</div>
+  </div>
+</section>
+
+<!-- ===== 后台框架 ===== -->
+<div class="admin" id="view-admin" style="display:none;">
+  <aside class="sidebar">
+    <div class="side-logo">
+      <span class="lic"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg></span>
+      <div><b>多模态工具管理后台</b></div>
+    </div>
+    <nav class="side-nav" id="sideNav">
+      <div class="nav-item active" data-view="home"><svg class="nicon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 10.5 12 3l9 7.5V21a1 1 0 0 1-1 1h-5v-7h-6v7H4a1 1 0 0 1-1-1z"/></svg>首页</div>
+      <div class="nav-item" data-view="res"><svg class="nicon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg>官方资源管理</div>
+      <div class="nav-item" data-view="users"><svg class="nicon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="9" cy="8" r="3.4"/><path d="M2.5 20c.8-3.4 3.4-5 6.5-5s5.7 1.6 6.5 5"/><circle cx="17.5" cy="9" r="2.6"/><path d="M16.5 15.2c2.8.2 4.7 1.7 5.4 4.3"/></svg>用户管理</div>
+      <div class="nav-item" data-view="genlog"><svg class="nicon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19V5a2 2 0 0 1 2-2h8l6 6v10a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2z"/><path d="M14 3v6h6"/></svg>生图记录</div>
+      <div class="nav-item" data-view="trainlog"><svg class="nicon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3v18M5 8l7-5 7 5"/><path d="M8 21h8"/></svg>训练记录</div>
+    </nav>
+  </aside>
+
+  <div class="main">
+    <header class="topbar">
+      <div class="crumb" id="crumb"></div>
+      <div class="tb-user">
+        <div class="user-box" id="userBox">
+          <div class="user-main">
+            <span class="ava">A</span>
+            <div><div class="un" id="topUserName">admin</div><div class="urole" id="topUserRole">管理员</div></div>
+            <svg class="carat" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+          </div>
+          <div class="user-menu" id="userMenu">
+            <div class="um-item" data-um="settings">账号设置</div>
+            <div class="um-item" data-um="switch">切换账号</div>
+            <div class="um-item" data-um="logout">退出登录</div>
+          </div>
+        </div>
+      </div>
+    </header>
+    <div class="content" id="content"></div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/echarts@5.4.3/dist/echarts.min.js"></script>
+
+<script>
+var CATS=['仓储仓库','货运卡车','集装箱','港口码头','冷链物流','分拣配送','质检场景','物流设备'];
+var CAT_ICON={仓储仓库:'🏭',货运卡车:'🚚',集装箱:'📦',港口码头:'⛴',冷链物流:'❄',分拣配送:'⚙',质检场景:'🔍',物流设备:'🛠'};
+var MODELS=[
+ {n:'仓储仓库底模',t:'CheckPoint',c:'仓储仓库',u:'inhabitant',d:12137,r:3568,ok:true,ot:false,dl:true,mx:true,pl:true,rs:false,sub:false,cm:true,orig:true,date:'2026-08-12 10:24:18'},
+ {n:'货运卡车LoRA',t:'LoRA',c:'货运卡车',u:'物流视觉组',d:8652,r:2144,ok:true,ot:false,dl:true,mx:false,pl:true,rs:false,sub:false,cm:true,orig:false,date:'2026-08-18 14:02:51'},
+ {n:'集装箱堆场LoRA',t:'LoRA',c:'集装箱',u:'inhabitant',d:9801,r:3012,ok:true,ot:false,dl:true,mx:false,pl:true,rs:false,sub:false,cm:true,orig:false,date:'2026-08-20 09:45:33'},
+ {n:'港口码头底模',t:'CheckPoint',c:'港口码头',u:'inhabitant',d:15620,r:4877,ok:true,ot:true,dl:true,mx:true,pl:true,rs:true,sub:false,cm:true,orig:true,date:'2026-08-02 16:12:05'},
+ {n:'冷链冷库LoRA',t:'LoRA',c:'冷链物流',u:'冷链项目组',d:5320,r:1321,ok:true,ot:false,dl:true,mx:false,pl:true,rs:false,sub:false,cm:true,orig:false,date:'2026-08-25 11:30:44'},
+ {n:'高位货架仓库LoRA',t:'LoRA',c:'仓储仓库',u:'inhabitant',d:7421,r:1988,ok:false,ot:false,dl:true,mx:false,pl:true,rs:false,sub:false,cm:true,orig:false,date:'2026-08-28 15:20:12'},
+ {n:'自动分拣线LoRA',t:'LoRA',c:'分拣配送',u:'inhabitant',d:6890,r:1765,ok:true,ot:false,dl:true,mx:false,pl:true,rs:false,sub:false,cm:true,orig:false,date:'2026-09-01 10:05:27'},
+ {n:'物流园区鸟瞰底模',t:'CheckPoint',c:'仓储仓库',u:'inhabitant',d:11042,r:2890,ok:true,ot:false,dl:true,mx:true,pl:true,rs:false,sub:false,cm:true,orig:true,date:'2026-07-30 13:40:19'},
+ {n:'叉车作业LoRA',t:'LoRA',c:'物流设备',u:'设备素材组',d:4210,r:980,ok:true,ot:false,dl:true,mx:false,pl:true,rs:false,sub:false,cm:true,orig:false,date:'2026-09-03 17:55:08'},
+ {n:'质检工作台LoRA',t:'LoRA',c:'质检场景',u:'inhabitant',d:3880,r:812,ok:true,ot:false,dl:true,mx:false,pl:true,rs:false,sub:false,cm:true,orig:false,date:'2026-09-05 09:18:36'},
+ {n:'无人机配送LoRA',t:'LoRA',c:'分拣配送',u:'inhabitant',d:2980,r:654,ok:false,ot:false,dl:true,mx:false,pl:true,rs:false,sub:false,cm:true,orig:false,date:'2026-09-06 14:32:10'},
+ {n:'冷链干线运输LoRA',t:'LoRA',c:'冷链物流',u:'冷链项目组',d:3560,r:731,ok:true,ot:false,dl:true,mx:false,pl:true,rs:false,sub:false,cm:true,orig:false,date:'2026-09-07 11:22:49'}
+];
+var USERS=[
+ {u:'admin',p:'138888888888',r:'管理员',note:'平台管理员',date:'2026-05-07 11:36:37',ok:true},
+ {u:'普通用户',p:'13999999999',r:'普通用户',note:'—',date:'2026-08-12 10:24:18',ok:true},
+ {u:'物流视觉组',p:'13800138000',r:'普通用户',note:'—',date:'2026-08-18 14:02:51',ok:true},
+ {u:'冷链项目组',p:'13700137000',r:'普通用户',note:'—',date:'2026-08-25 11:30:44',ok:true},
+ {u:'设备素材组',p:'13600136000',r:'普通用户',note:'—',date:'2026-09-03 17:55:08',ok:true},
+ {u:'质检专员',p:'13500135000',r:'普通用户',note:'—',date:'2026-09-05 09:18:36',ok:true},
+ {u:'港口调度',p:'13400134000',r:'普通用户',note:'—',date:'2026-08-02 16:12:05',ok:true},
+ {u:'分拣班长',p:'13300133000',r:'普通用户',note:'—',date:'2026-09-01 10:05:27',ok:false},
+ {u:'集装箱组',p:'13200132000',r:'普通用户',note:'—',date:'2026-08-20 09:45:33',ok:true},
+ {u:'巡检员',p:'13000130000',r:'普通用户',note:'—',date:'2026-09-06 14:32:10',ok:true},
+ {u:'库存管理',p:'12900129000',r:'普通用户',note:'—',date:'2026-09-07 11:22:49',ok:true}
+];
+var AI_IMGS=[
+ {t:'港口码头黄昏全景',c:'港口码头',u:'inhabitant',gen:286,date:'2026-08-12 10:21:33',fv:86,dl:156,ok:true,tag:'写实'},
+ {t:'仓库内部自动化分拣线',c:'分拣配送',u:'物流视觉组',gen:214,date:'2026-08-14 09:05:12',fv:64,dl:132,ok:true,tag:'写实'},
+ {t:'集装箱堆场俯拍',c:'集装箱',u:'inhabitant',gen:187,date:'2026-08-16 14:32:45',fv:52,dl:110,ok:true,tag:'航拍'},
+ {t:'冷链冷库内部',c:'冷链物流',u:'冷链项目组',gen:143,date:'2026-08-18 11:18:02',fv:41,dl:98,ok:false,tag:'写实'},
+ {t:'货运卡车车队行驶',c:'货运卡车',u:'inhabitant',gen:258,date:'2026-08-20 16:40:27',fv:77,dl:145,ok:true,tag:'写实'},
+ {t:'高位货架仓库全景',c:'仓储仓库',u:'inhabitant',gen:132,date:'2026-08-22 10:08:54',fv:33,dl:87,ok:true,tag:'写实'},
+ {t:'质检工作台细节',c:'质检场景',u:'质检专员',gen:96,date:'2026-08-25 15:22:36',fv:21,dl:56,ok:true,tag:'特写'},
+ {t:'叉车作业现场',c:'物流设备',u:'设备素材组',gen:84,date:'2026-08-27 09:47:13',fv:18,dl:49,ok:false,tag:'写实'},
+ {t:'无人机配送入库',c:'分拣配送',u:'inhabitant',gen:121,date:'2026-08-29 17:03:41',fv:30,dl:78,ok:true,tag:'概念'},
+ {t:'物流园区鸟瞰',c:'仓储仓库',u:'inhabitant',gen:205,date:'2026-09-01 13:26:19',fv:59,dl:121,ok:true,tag:'航拍'}
+];
+var LIB_IMGS=[
+ {t:'仓库内景素材包',c:'仓储仓库',u:'inhabitant',gen:68,date:'2026-08-11 10:12:33',fv:12,dl:45,ok:true,tag:'素材'},
+ {t:'集装箱特写素材',c:'集装箱',u:'集装箱组',gen:79,date:'2026-08-13 14:25:08',fv:19,dl:52,ok:true,tag:'素材'},
+ {t:'港口码头组图',c:'港口码头',u:'港口调度',gen:57,date:'2026-08-16 09:40:52',fv:11,dl:38,ok:true,tag:'素材'},
+ {t:'冷链运输场景包',c:'冷链物流',u:'冷链项目组',gen:46,date:'2026-08-19 15:08:21',fv:9,dl:30,ok:true,tag:'素材'},
+ {t:'分拣流水线素材',c:'分拣配送',u:'inhabitant',gen:63,date:'2026-08-22 11:33:47',fv:14,dl:41,ok:false,tag:'素材'},
+ {t:'质检场景素材',c:'质检场景',u:'质检专员',gen:39,date:'2026-08-26 10:17:05',fv:7,dl:24,ok:true,tag:'素材'}
+];
+var GENLOG=[
+ {u:'inhabitant',p:'13999999999',way:'对话生图',m:'Qwen-Image',prompt:'现代化物流仓库内部，自动化分拣线正在运行，清晨光线，写实风格',sz:'1024×1024',t:'2026-09-09 18:12:52',cost:'1分57秒',st:'成功',id:'01M20D2F8WNF4G5E73M6ZMS64'},
+ {u:'物流视觉组',p:'13800138000',way:'对话生图',m:'Qwen-Image',prompt:'集装箱堆场，夕阳，港口起重机，电影感光影',sz:'1024×1024',t:'2026-09-09 18:09:20',cost:'24秒',st:'成功',id:'01M207WP8Z18YX1JX7A4VBF9KC'},
+ {u:'inhabitant',p:'13999999999',way:'在线工作流',m:'CheckPoint+LoRA',prompt:'货运卡车车队，高速公路，逆光，商业摄影',sz:'1024×1024',t:'2026-09-09 18:07:28',cost:'29秒',st:'成功',id:'01M207S8HWAEAXA39NCX711W6G'},
+ {u:'冷链项目组',p:'13700137000',way:'对话生图',m:'Qwen-Image',prompt:'冷链冷库内部，白色工装工作人员检查温度记录仪',sz:'1024×1024',t:'2026-09-09 18:06:54',cost:'1分53秒',st:'成功',id:'01M207R8K6H2TGDG24MZQDSBTZ'},
+ {u:'设备素材组',p:'13600136000',way:'对话生图',m:'Qwen-Image',prompt:'叉车在货架间作业，仓储环境，自然光',sz:'768×1024',t:'2026-09-09 18:05:11',cost:'18秒',st:'成功',id:'01M207K2A5KD4F9J8Q2BVCXW34'},
+ {u:'质检专员',p:'13500135000',way:'对话生图',m:'Qwen-Image',prompt:'质检工作台，质检员手持扫描设备检查货物',sz:'1024×1024',t:'2026-09-09 18:02:15',cost:'1分49秒',st:'成功',id:'01M207F5K7H2J8L3M4N5BVCXW01'},
+ {u:'港口调度',p:'13400134000',way:'对话生图',m:'Qwen-Image',prompt:'港口码头全景，集装箱吊装，黄昏时分',sz:'1024×1024',t:'2026-09-09 17:58:36',cost:'26秒',st:'执行中',id:'01M206A2Q9W3E4R5T6Y7U8IO9P0'},
+ {u:'集装箱组',p:'13200132000',way:'在线工作流',m:'CheckPoint+LoRA',prompt:'集装箱特写，生锈质感，工业摄影风格',sz:'1024×1024',t:'2026-09-09 17:55:04',cost:'28秒',st:'成功',id:'01M206K1L2M3N4B5V6C7X8Z9A0S'},
+ {u:'分拣班长',p:'13300133000',way:'对话生图',m:'Qwen-Image',prompt:'自动分拣流水线，包裹快速移动，动态模糊效果',sz:'1024×1024',t:'2026-09-09 17:50:22',cost:'1分55秒',st:'成功',id:'01M205E4R5T6Y7U8I9O0P1A2S3D'}
+];
+var TRAINLOG=[
+ {u:'inhabitant',p:'13999999999',name:'仓储仓库LoRA·V2',base:'Qwen-Image',st:'成功',t:'2026-09-09 16:27:47',cost:'2分19秒',steps:2400,imgs:28,id:'01M22MFFNRMDHMCVH5SZKD6PEY',prog:100},
+ {u:'物流视觉组',p:'13800138000',name:'货运卡车LoRA',base:'Flux.1 schnell',st:'成功',t:'2026-09-09 16:16:17',cost:'1分59秒',steps:1800,imgs:20,id:'01M22KTCX7VV3DNK8D63K5WNVA',prog:100},
+ {u:'inhabitant',p:'13999999999',name:'港口码头LoRA',base:'SDXL 1.0',st:'执行中',t:'2026-09-10 09:12:33',cost:'—',steps:3000,imgs:32,id:'01M30A1B2C3D4E5F6G7H8I9J0K',prog:64},
+ {u:'冷链项目组',p:'13700137000',name:'冷链冷库LoRA',base:'Qwen-Image',st:'成功',t:'2026-09-08 14:22:05',cost:'2分05秒',steps:2200,imgs:24,id:'01M18X9Y8Z7W6V5U4T3S2R1Q0P',prog:100},
+ {u:'inhabitant',p:'13999999999',name:'高位货架LoRA',base:'Flux.1 schnell',st:'失败',t:'2026-09-08 11:15:40',cost:'—',steps:2000,imgs:18,id:'01M17F5D4S3A2Q1W2E3R4T5Y6U7',prog:32,why:'torch.OutOfMemoryError: CUDA out of memory. Tried to allocate 3.12 GiB.'},
+ {u:'质检专员',p:'13500135000',name:'质检工作台LoRA',base:'Qwen-Image',st:'已取消',t:'2026-09-07 17:40:22',cost:'—',steps:1800,imgs:16,id:'01M16Z6X5C4V3B2N1M2K3J4H5G6',prog:0},
+ {u:'设备素材组',p:'13600136000',name:'叉车作业LoRA',base:'SDXL 1.0',st:'成功',t:'2026-09-06 10:33:18',cost:'1分44秒',steps:1600,imgs:14,id:'01M15Q1W2E3R4T5Y6U7I8O9P0A1',prog:100}
+];
+/* ===== 工具 ===== */
+var CUR={view:'home'};
+function $(id){return document.getElementById(id);}
+function esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+function toast(msg){
+  var t=document.createElement('div');
+  t.style.cssText='position:fixed;top:70px;left:50%;transform:translateX(-50%);background:#111827;color:#fff;font-size:13px;padding:9px 18px;border-radius:8px;z-index:999;box-shadow:0 8px 24px rgba(0,0,0,.2);';
+  t.textContent=msg;
+  document.body.appendChild(t);
+  setTimeout(function(){t.remove();},2200);
+}
+function stTag(st){
+  if(st==='成功'||st==='已发布')return '<span class="tag green">'+st+'</span>';
+  if(st==='失败')return '<span class="tag red">'+st+'</span>';
+  if(st==='执行中')return '<span class="tag blue">'+st+'</span>';
+  if(st==='待审核')return '<span class="tag orange">'+st+'</span>';
+  if(st==='已取消')return '<span class="tag gray">'+st+'</span>';
+  if(st==='已下架')return '<span class="tag gray">'+st+'</span>';
+  if(st===true||st==='启用')return '<span class="tag green">启用</span>';
+  if(st===false||st==='停用')return '<span class="tag gray">停用</span>';
+  return '<span class="tag">'+esc(st)+'</span>';
+}
+function wayTag(w){
+  var m={对话生图:'blue',在线工作流:'purple'};
+  return '<span class="tag '+(m[w]||'gray')+'">'+w+'</span>';
+}
+function yny(v){return v?'<span class="tag green">是</span>':'<span class="tag gray">否</span>';}
+function permTags(u){
+  var p=u.perms||{c:true,w:true,l:true};
+  return '<span class="tag '+(p.c?'blue':'gray')+'">对话生图</span><span class="tag '+(p.w?'purple':'gray')+'">在线工作流</span><span class="tag '+(p.l?'orange':'gray')+'">Lora训练</span>';
+}
+function permChkHtml(idC,idW,idL,u){
+  var p=u&&u.perms||{c:true,w:true,l:true};
+  return '<div class="lic" style="margin-top:6px;"><span class="chk"><input type="checkbox" id="'+idC+'"'+(p.c?' checked':'')+'>对话生图</span><span class="chk"><input type="checkbox" id="'+idW+'"'+(p.w?' checked':'')+'>在线工作流</span><span class="chk"><input type="checkbox" id="'+idL+'"'+(p.l?' checked':'')+'>Lora训练</span></div>';
+}
+function pager(cur,total,size,fn){
+  var pages=Math.max(1,Math.ceil(total/size));
+  var h='<span class="page-info">共 '+total+' 条</span>';
+  h+='<button '+(cur<=1?'disabled':'')+' data-pg="'+(cur-1)+'">‹</button>';
+  var s=Math.max(1,cur-2),e=Math.min(pages,cur+2);
+  if(s>1)h+='<button data-pg="1">1</button>'+(s>2?'<span style="color:#9CA3AF;padding:0 2px;">…</span>':'');
+  for(var i=s;i<=e;i++)h+='<button class="'+(i===cur?'on':'')+'" data-pg="'+i+'">'+i+'</button>';
+  if(e<pages)h+=(e<pages-1?'<span style="color:#9CA3AF;padding:0 2px;">…</span>':'')+'<button data-pg="'+pages+'">'+pages+'</button>';
+  h+='<button '+(cur>=pages?'disabled':'')+' data-pg="'+(cur+1)+'">›</button>';
+  return '<div class="pager">'+h+'</div>';
+}
+function bindPager(container,fn){
+  container.querySelectorAll('.pager button').forEach(function(b){
+    b.onclick=function(){if(!b.disabled)fn(parseInt(b.getAttribute('data-pg'))||1);};
+  });
+}
+function dialog(title,bodyHtml,ftHtml,onOk){
+  var m=document.createElement('div');m.className='modal';
+  m.innerHTML='<div class="dialog"><div class="dialog-hd">'+esc(title)+'<span class="x">×</span></div><div class="dialog-bd">'+bodyHtml+'</div>'+(ftHtml?'<div class="dialog-ft">'+ftHtml+'</div>':'')+'</div>';
+  m.querySelector('.x').onclick=function(){m.remove();};
+  m.addEventListener('click',function(e){if(e.target===m)m.remove();});
+  if(onOk){m.querySelector('.ok').onclick=function(){onOk(m);};}
+  document.body.appendChild(m);
+  setTimeout(function(){m.classList.add('open');},10);
+  return m;
+}
+
+/* ===== 登录 ===== */
+document.getElementById('lgGo').onclick=function(){
+  document.getElementById('view-login').style.display='none';
+  document.getElementById('view-admin').style.display='flex';
+  go('home');
+};
+document.getElementById('lgAcc').addEventListener('keydown',function(e){if(e.key==='Enter')document.getElementById('lgGo').click();});
+document.getElementById('lgPwd').addEventListener('keydown',function(e){if(e.key==='Enter')document.getElementById('lgGo').click();});
+
+/* ===== 视图切换 ===== */
+var TITLES={home:'首页',res:'官方资源管理',users:'用户管理',genlog:'生图记录',trainlog:'训练记录'};
+function go(v){
+  CUR.view=v;
+  document.querySelectorAll('#sideNav .nav-item').forEach(function(n){n.classList.toggle('active',n.getAttribute('data-view')===v);});
+  document.getElementById('crumb').textContent=TITLES[v];
+  var c=document.getElementById('content');
+  if(v==='home')renderHome(c);
+  else if(v==='res')renderRes(c);
+  else if(v==='users')renderUsers(c);
+  else if(v==='genlog')renderGenLog(c);
+  else if(v==='trainlog')renderTrainLog(c);
+}
+document.querySelectorAll('#sideNav .nav-item').forEach(function(n){
+  n.onclick=function(){go(n.getAttribute('data-view'));};
+});
+
+/* ===== 首页 ===== */
+var HOURS=[1136,599,207,66,32,17,33,50,3298,8826,8574,6476,3034,4142,9373,12149,12022,7760,4223,4797,4725,4125,3163,2127];
+var HOTMODELS=[{n:'Qwen-Image',v:960,c:'#1D4ED8'},{n:'Flux.2 klein',v:720,c:'#16A34A'},{n:'SDXL 1.0',v:560,c:'#7C3AED'},{n:'Seedream 4.0',v:340,c:'#F59E0B'},{n:'FLUX.1 schnell',v:180,c:'#EC4899'}];
+function renderHome(c){
+  var max=Math.max.apply(null,HOURS);
+  var bars=HOURS.map(function(v,i){return '<div class="hb"><div class="bar" style="height:'+Math.max(2,Math.round(v/max*112))+'px;"></div><div class="lbl">'+String(i).padStart(2,'0')+'</div></div>';}).join('');
+  var hmax=1000, hticks=[1000,800,600,400,200,0];
+  var hy=hticks.map(function(t){return '<span style="height:1px;display:block;">'+t+'</span>';}).join('');
+  var hbars=HOTMODELS.map(function(m){
+    var h=Math.round(m.v/hmax*175);
+    return '<div class="hot-bar"><div class="bv">'+m.v+'</div><div style="height:'+h+'px;width:100%;background:linear-gradient(180deg,'+m.c+'55,'+m.c+');border-radius:5px 5px 0 0;"></div><div class="bnm">'+m.n+'</div></div>';
+  }).join('');
+  c.innerHTML=
+  '<div class="statgrid">'+
+    '<div class="stat blue"><div class="k">注册用户总数</div><div class="v">1,249</div><div class="d">较昨日 +12</div></div>'+
+    '<div class="stat blue"><div class="k">平台模型总数</div><div class="v">106</div><div class="d">CheckPoint 18 · LoRA 88</div></div>'+
+    '<div class="stat green"><div class="k">AI图片总数</div><div class="v">6,208</div><div class="d">较昨日 +136</div></div>'+
+    '<div class="stat green"><div class="k">设计图片总数</div><div class="v">1,875</div><div class="d">较昨日 +42</div></div>'+
+    '<div class="stat orange"><div class="k">生图记录总数</div><div class="v">100,954</div><div class="d">日均 151</div></div>'+
+    '<div class="stat purple"><div class="k">训练记录总数</div><div class="v">606</div><div class="d">日均 1</div></div>'+
+  '</div>'+
+  '<div class="panel" style="margin-bottom:10px;"><div class="panel-hd" style="padding:8px 18px;"><b>每小时生成统计</b><span style="font-size:12px;color:var(--sub);">今日 24 小时分布</span></div><div class="panel-bd" style="padding:4px 12px;"><div class="hourbars">'+bars+'</div></div></div>'+
+  '<div class="perf2">'+
+    '<div class="perf"><div class="pt">生图性能统计</div><div class="pcols">'+
+      '<div class="pcol"><div class="k">总任务数</div><div class="v">100,954</div></div>'+
+      '<div class="pcol"><div class="k">成功任务数</div><div class="v green">90,746</div></div>'+
+      '<div class="pcol"><div class="k">失败任务数</div><div class="v red">7,939</div></div>'+
+      '<div class="pcol"><div class="k">取消任务数</div><div class="v orange">2,507</div></div>'+
+    '</div><div class="prates"><span class="ok">成功率：<b>89.68%</b></span><span class="no">失败率：<b>7.85%</b></span><span class="cc">取消率：<b>2.48%</b></span><span class="avg">平均生成耗时（秒）：59.27</span></div></div>'+
+    '<div class="perf"><div class="pt">训练性能统计</div><div class="pcols">'+
+      '<div class="pcol"><div class="k">总任务数</div><div class="v">606</div></div>'+
+      '<div class="pcol"><div class="k">成功任务数</div><div class="v green">386</div></div>'+
+      '<div class="pcol"><div class="k">失败任务数</div><div class="v red">194</div></div>'+
+      '<div class="pcol"><div class="k">取消任务数</div><div class="v orange">26</div></div>'+
+    '</div><div class="prates"><span class="ok">成功率：<b>63.70%</b></span><span class="no">失败率：<b>32.01%</b></span><span class="cc">取消率：<b>4.29%</b></span><span class="avg">平均训练耗时（秒）：714.56</span></div></div>'+
+  '</div>'+
+  '<div class="panel"><div class="panel-hd" style="padding:8px 18px;"><b>热门模型统计</b><span style="font-size:12px;color:var(--sub);">今日生图次数 · 单位：生图次数（次）</span></div><div class="panel-bd" style="padding:8px 18px 6px;"><div class="pstat">'+
+    '<div class="hotchart"><div class="hot-row"><div class="hot-y">'+hy+'</div><div class="hot-bars">'+hbars+'</div></div></div>'+
+    '<div class="plegend">'+
+      HOTMODELS.map(function(m){return '<div class="li"><i style="background:'+m.c+';"></i>'+m.n+'<b>'+m.v.toLocaleString()+'</b></div>';}).join('')+
+    '</div>'+
+  '</div></div></div>';
+}
+var PAL=['#5B8DEF','#7BC9A6','#F0A35E','#A78BFA','#E88BB0','#5FB8C9'];
+function ph(k){var s=0;for(var i=0;i<k.length;i++)s+=k.charCodeAt(i);return PAL[s%PAL.length];}
+/* ===== 官方资源管理（模型/AI图片/设计图库 合并） ===== */
+var WF_MODELS=[
+ {n:'仓储仓库写实',t:'Workflow',c:'仓储仓库',u:'管理员',d:37,r:12,ok:true,date:'2026-07-12 10:20:33'},
+ {n:'集装箱特写',t:'Workflow',c:'集装箱',u:'管理员',d:26,r:4,ok:true,date:'2026-07-15 14:02:51'},
+ {n:'港口码头全景',t:'Workflow',c:'港口码头',u:'管理员',d:31,r:6,ok:true,date:'2026-07-18 09:45:33'},
+ {n:'分拣流水线',t:'Workflow',c:'分拣配送',u:'管理员',d:45,r:2,ok:true,date:'2026-07-20 16:12:05'},
+ {n:'冷链仓库',t:'Workflow',c:'冷链物流',u:'管理员',d:22,r:3,ok:false,date:'2026-07-22 11:30:44'},
+ {n:'质检场景',t:'Workflow',c:'质检场景',u:'管理员',d:28,r:5,ok:true,date:'2026-07-25 15:20:12'},
+ {n:'货运卡车车队',t:'Workflow',c:'货运卡车',u:'管理员',d:19,r:1,ok:true,date:'2026-07-28 10:05:27'},
+ {n:'仓库自动化分拣',t:'Workflow',c:'仓储仓库',u:'管理员',d:24,r:4,ok:true,date:'2026-08-01 13:40:19'},
+ {n:'堆场调度工作流',t:'Workflow',c:'集装箱',u:'管理员',d:17,r:2,ok:true,date:'2026-08-05 17:55:08'},
+ {n:'港机设备工作流',t:'Workflow',c:'物流设备',u:'管理员',d:15,r:0,ok:true,date:'2026-08-08 09:18:36'}
+];
+var RES_SUB='m',RES_MODEL_SUB='ck';
+function renderRes(c){
+  c.innerHTML='<div class="rtabs" id="resTabs">'+
+    '<button class="active" data-rs="m">模型管理</button>'+
+    '<button data-rs="ai">AI图片管理</button>'+
+    '<button data-rs="lib">设计图库管理</button>'+
+  '</div><div id="resBody"></div>';
+  document.querySelectorAll('#resTabs button').forEach(function(b){
+    b.onclick=function(){
+      document.querySelectorAll('#resTabs button').forEach(function(x){x.classList.remove('active');});
+      b.classList.add('active');
+      RES_SUB=b.getAttribute('data-rs');
+      renderResBody(c);
+    };
+  });
+  renderResBody(c);
+}
+function renderResBody(c){
+  var body=document.getElementById('resBody');
+  if(RES_SUB==='m'){
+    body.innerHTML='<div class="rtabs2" id="resMTabs">'+
+      '<button class="active" data-rm="ck">生图模型</button>'+
+      '<button data-rm="wf">工作流模型</button>'+
+    '</div><div id="resMBody"></div>';
+    document.querySelectorAll('#resMTabs button').forEach(function(b){
+      b.onclick=function(){
+        document.querySelectorAll('#resMTabs button').forEach(function(x){x.classList.remove('active');});
+        b.classList.add('active');
+        RES_MODEL_SUB=b.getAttribute('data-rm');
+        renderResMBody(c);
+      };
+    });
+    renderResMBody(c);
+  }else if(RES_SUB==='ai'){
+    renderImgs(body,AI_IMGS,'AI图片');
+  }else{
+    renderImgs(body,LIB_IMGS,'设计图库');
+  }
+}
+function renderResMBody(c){
+  var mb=document.getElementById('resMBody');
+  if(!mb)return;
+  if(RES_MODEL_SUB==='ck'){renderModels(mb);}
+  else{renderWfModels(mb);}
+}
+var WF_F={kw:'',cat:''};
+function renderWfModels(c,pg){
+  pg=pg||1;var size=10;
+  var list=WF_MODELS.filter(function(m){
+    if(WF_F.kw&&m.n.indexOf(WF_F.kw)<0)return false;
+    if(WF_F.cat&&m.c!==WF_F.cat)return false;
+    return true;
+  });
+  var rows=list.slice((pg-1)*size,pg*size).map(function(m){
+    return '<tr><td><div style="display:flex;align-items:center;gap:10px;"><div class="ph" style="background:'+ph(m.n)+';width:46px;height:34px;"></div><div><b>'+esc(m.n)+'</b></div></div></td>'+
+    '<td><span class="tag purple">Workflow</span></td><td><span class="tag blue">'+esc(m.c)+'</span></td>'+
+    '<td style="color:var(--sub);font-size:12px;">'+m.d+'</td><td style="color:var(--sub);font-size:12px;">'+m.r+'</td>'+
+    '<td><button class="switch'+(m.ok?' on':'')+'" data-i="'+WF_MODELS.indexOf(m)+'" title="点击切换启用/停用"></button></td>'+
+    '<td style="color:var(--sub);font-size:12px;white-space:nowrap;">'+m.date+'</td>'+
+    '<td style="white-space:nowrap;"><button class="btn link" data-act="edit" data-i="'+WF_MODELS.indexOf(m)+'">编辑</button><button class="btn link danger" data-act="del" data-i="'+WF_MODELS.indexOf(m)+'">删除</button></td></tr>';
+  }).join('');
+  c.innerHTML='<div class="panel"><div class="panel-hd"><b>工作流模型</b></div>'+
+  '<div class="panel-bd"><div class="toolbar">'+
+    '<div class="search"><span style="color:var(--sub);">工作流名称</span><input class="input" id="wfKw" placeholder="请输入工作流名称搜索" value="'+esc(WF_F.kw||'')+'"></div>'+
+    '<select class="sel" id="wfCat"><option value="">全部分类</option>'+CATS.map(function(x){return '<option '+(WF_F.cat===x?'selected':'')+'>'+x+'</option>';}).join('')+'</select>'+
+    '<button class="btn primary sm" id="wfSearch">查询</button><button class="btn sm" id="wfReset">重置</button>'+
+  '</div></div>'+
+  '<div class="tbl-wrap"><table class="tbl"><thead><tr><th>名称</th><th>模型类型</th><th>分类</th><th>下载量</th><th>运行量</th><th>状态</th><th>上传时间</th><th>操作</th></tr></thead><tbody>'+rows+'</tbody></table></div>'+
+  (list.length?pager(pg,list.length,size):'<div style="padding:30px;text-align:center;color:var(--sub);">无数据</div>')+'</div>';
+  var w=function(){WF_F.kw=document.getElementById('wfKw').value;WF_F.cat=document.getElementById('wfCat').value;renderWfModels(c);};
+  document.getElementById('wfSearch').onclick=w;
+  document.getElementById('wfReset').onclick=function(){WF_F={kw:'',cat:''};renderWfModels(c);};
+  bindPager(c,function(p){renderWfModels(c,p);});
+  c.querySelectorAll('button[data-act=del]').forEach(function(b){
+    b.onclick=function(){
+      var i=parseInt(b.getAttribute('data-i'));
+      dialog('删除工作流','确定删除工作流「'+esc(WF_MODELS[i].n)+'」吗？删除后不可恢复。','<button class="btn sm">取消</button><button class="btn primary sm ok" style="background:var(--red);">删除</button>',function(m){
+        WF_MODELS.splice(i,1);m.remove();toast('工作流已删除');renderWfModels(c);
+      });
+    };
+  });
+  c.querySelectorAll('button[data-act=edit]').forEach(function(b){
+    b.onclick=function(){
+      var i=parseInt(b.getAttribute('data-i'));
+      var m=WF_MODELS[i];
+      dialog('编辑工作流',
+        '<div class="dform"><label>工作流名称</label><input class="input" id="ewN" value="'+esc(m.n)+'"><label>原创内容</label><select class="sel" id="ewOr"><option value="true"'+(m.orig!==false?' selected':'')+'>原创</option><option value="false"'+(m.orig===false?' selected':'')+'>转载</option></select><label>所属分类</label><select class="sel" id="ewC">'+CATS.map(function(x){return '<option '+(m.c===x?'selected':'')+'>'+x+'</option>';}).join('')+'</select><label>描述</label><textarea class="input" id="ewD" style="height:64px;resize:none;">'+esc(m.desc||'')+'</textarea></div>',
+        '<button class="btn sm">取消</button><button class="btn primary sm ok">保存</button>',
+        function(d){
+          WF_MODELS[i].n=document.getElementById('ewN').value;
+          WF_MODELS[i].orig=document.getElementById('ewOr').value==='true';
+          WF_MODELS[i].c=document.getElementById('ewC').value;
+          WF_MODELS[i].desc=document.getElementById('ewD').value;
+          d.remove();toast('工作流「'+WF_MODELS[i].n+'」已更新');renderWfModels(c);
+        });
+    };
+  });
+  c.querySelectorAll('.switch').forEach(function(s){
+    s.onclick=function(){
+      var i=parseInt(s.getAttribute('data-i'));
+      WF_MODELS[i].ok=!WF_MODELS[i].ok;
+      toast('已'+(WF_MODELS[i].ok?'启用':'停用')+'工作流「'+WF_MODELS[i].n+'」');
+      renderWfModels(c);
+    };
+  });
+}
+
+/* ===== 模型组管理 ===== */
+var MODEL_F={kw:'',cat:'',ok:''};
+function renderModels(c,pg){
+  pg=pg||1;var size=10;
+  var list=MODELS.filter(function(m){
+    if(MODEL_F.kw&&m.n.indexOf(MODEL_F.kw)<0)return false;
+    if(MODEL_F.cat&&m.c!==MODEL_F.cat)return false;
+    if(MODEL_F.ok!==''&&String(m.ok)!==MODEL_F.ok)return false;
+    return true;
+  });
+  var rows=list.slice((pg-1)*size,pg*size).map(function(m){
+    return '<tr><td><div style="display:flex;align-items:center;gap:10px;"><div class="ph" style="background:'+ph(m.n)+';width:46px;height:34px;"></div><div><b>'+esc(m.n)+'</b></div></div></td>'+
+    '<td>'+esc(m.t)+'</td><td><span class="tag blue">'+esc(m.c)+'</span></td><td style="color:var(--sub);font-size:12px;">'+m.d.toLocaleString()+'</td><td style="color:var(--sub);font-size:12px;">'+m.r.toLocaleString()+'</td>'+
+    '<td>'+yny(m.dl)+'</td><td>'+yny(m.orig)+'</td>'+
+    '<td><button class="switch'+(m.ok?' on':'')+'" data-i="'+MODELS.indexOf(m)+'" title="点击切换启用/停用"></button></td>'+
+    '<td style="color:var(--sub);font-size:12px;white-space:nowrap;">'+m.date+'</td>'+
+    '<td style="white-space:nowrap;"><button class="btn link" data-act="edit" data-i="'+MODELS.indexOf(m)+'">编辑</button><button class="btn link danger" data-act="del" data-i="'+MODELS.indexOf(m)+'">删除</button></td></tr>';
+  }).join('');
+  c.innerHTML='<div class="panel"><div class="panel-hd"><b>生图模型</b></div>'+
+  '<div class="panel-bd"><div class="toolbar">'+
+    '<div class="search"><span style="color:var(--sub);">模型名称</span><input class="input" id="mKw" placeholder="请输入模型名称搜索" value="'+esc(MODEL_F.kw||'')+'"></div>'+
+    '<select class="sel" id="mCat"><option value="">全部分类</option>'+CATS.map(function(x){return '<option '+(MODEL_F.cat===x?'selected':'')+'>'+x+'</option>';}).join('')+'</select>'+
+    '<select class="sel" id="mOk"><option value="">状态</option><option value="true"'+(MODEL_F.ok==='true'?' selected':'')+'>启用</option><option value="false"'+(MODEL_F.ok==='false'?' selected':'')+'>停用</option></select>'+
+    '<button class="btn primary sm" id="mSearch">查询</button><button class="btn sm" id="mReset">重置</button>'+
+  '</div></div>'+
+  '<div class="tbl-wrap"><table class="tbl"><thead><tr><th>名称</th><th>模型类型</th><th>分类</th><th>下载量</th><th>运行量</th><th>允许下载</th><th>是否原创</th><th>状态</th><th>上传时间</th><th>操作</th></tr></thead><tbody>'+rows+'</tbody></table></div>'+
+  (list.length?pager(pg,list.length,size):'<div style="padding:30px;text-align:center;color:var(--sub);">无数据</div>')+'</div>';
+  var w=function(){MODEL_F.kw=document.getElementById('mKw').value;MODEL_F.cat=document.getElementById('mCat').value;MODEL_F.ok=document.getElementById('mOk').value;renderModels(c);};
+  document.getElementById('mSearch').onclick=w;
+  document.getElementById('mReset').onclick=function(){MODEL_F={kw:'',cat:'',ok:''};renderModels(c);};
+  bindPager(c,function(p){renderModels(c,p);});
+  c.querySelectorAll('.switch').forEach(function(s){
+    s.onclick=function(){
+      var i=parseInt(s.getAttribute('data-i'));
+      MODELS[i].ok=!MODELS[i].ok;
+      toast('已'+(MODELS[i].ok?'启用':'停用')+'模型「'+MODELS[i].n+'」');
+      renderModels(c);
+    };
+  });
+  c.querySelectorAll('button[data-act=del]').forEach(function(b){
+    b.onclick=function(){
+      var i=parseInt(b.getAttribute('data-i'));
+      dialog('删除模型','确定删除模型「'+esc(MODELS[i].n)+'」吗？删除后不可恢复。','<button class="btn sm">取消</button><button class="btn primary sm ok" style="background:var(--red);">删除</button>',function(m){
+        MODELS.splice(i,1);m.remove();toast('模型已删除');renderModels(c);
+      });
+    };
+  });
+  c.querySelectorAll('button[data-act=edit]').forEach(function(b){
+    b.onclick=function(){
+      var i=parseInt(b.getAttribute('data-i'));
+      var m=MODELS[i];
+      dialog('编辑模型',
+        '<div class="dform"><label>模型名称</label><input class="input" id="emN" value="'+esc(m.n)+'"><label>原创内容</label><select class="sel" id="emOr"><option value="true"'+(m.orig?' selected':'')+'>原创</option><option value="false"'+(m.orig?'':' selected')+'>转载</option></select><label>模型类型</label><select class="sel" id="emT"><option '+(m.t==='CheckPoint'?'selected':'')+'>CheckPoint</option><option '+(m.t==='LoRA'?'selected':'')+'>LoRA</option></select><label>所属分类</label><select class="sel" id="emC">'+CATS.map(function(x){return '<option '+(m.c===x?'selected':'')+'>'+x+'</option>';}).join('')+'</select><label>描述</label><textarea class="input" id="emD" style="height:64px;resize:none;">'+esc(m.desc||'')+'</textarea></div>',
+        '<button class="btn sm">取消</button><button class="btn primary sm ok">保存</button>',
+        function(d){
+          MODELS[i].n=document.getElementById('emN').value;
+          MODELS[i].orig=document.getElementById('emOr').value==='true';
+          MODELS[i].t=document.getElementById('emT').value;
+          MODELS[i].c=document.getElementById('emC').value;
+          MODELS[i].desc=document.getElementById('emD').value;
+          d.remove();toast('模型「'+MODELS[i].n+'」已更新');renderModels(c);
+        });
+    };
+  });
+}
+
+/* ===== 用户管理 ===== */
+var USER_F={kw:'',p:'',r:''};
+function renderUsers(c,pg){
+  pg=pg||1;var size=10;
+  var list=USERS.filter(function(u){
+    if(USER_F.kw&&u.u.indexOf(USER_F.kw)<0)return false;
+    if(USER_F.p&&u.p.indexOf(USER_F.p)<0)return false;
+    if(USER_F.r&&u.r!==USER_F.r)return false;
+    return true;
+  });
+  var rows=list.slice((pg-1)*size,pg*size).map(function(u,i){
+    return '<tr><td><div class="ava" style="width:30px;height:30px;font-size:12px;">'+esc(u.u[0].toUpperCase())+'</div></td><td><b>'+esc(u.u)+'</b></td><td>'+esc(u.p)+'</td>'+
+    '<td><span class="tag '+(u.r==='管理员'?'blue':'gray')+'">'+u.r+'</span></td><td style="color:var(--sub);font-size:12px;">'+esc(u.note)+'</td><td style="color:var(--sub);font-size:12px;">'+u.date+'</td>'+
+    '<td style="white-space:nowrap;">'+permTags(u)+'</td>'+
+    '<td><button class="switch'+(u.ok?' on':'')+'" data-i="'+((pg-1)*size+i)+'" title="点击切换启用/停用"></button></td>'+
+    '<td style="white-space:nowrap;"><button class="btn link" data-i="'+((pg-1)*size+i)+'">编辑</button><button class="btn link danger" data-i="'+((pg-1)*size+i)+'">删除</button><button class="btn link" data-v="genlog">生图记录</button><button class="btn link" data-v="trainlog">训练记录</button></td></tr>';
+  }).join('');
+  c.innerHTML='<div class="panel"><div class="panel-hd"><b>用户管理</b><button class="btn primary sm" id="addUser">+ 新建用户</button></div>'+
+  '<div class="panel-bd"><div class="toolbar">'+
+    '<div class="search"><span style="color:var(--sub);">用户名</span><input class="input" id="uKw" placeholder="请输入用户名过滤" value="'+esc(USER_F.kw||'')+'"></div>'+
+    '<div class="search"><span style="color:var(--sub);">手机号</span><input class="input" id="uP" style="min-width:150px;" placeholder="请输入手机号过滤" value="'+esc(USER_F.p||'')+'"></div>'+
+    '<select class="sel" id="uR"><option value="">全部角色</option><option value="普通用户"'+(USER_F.r==='普通用户'?' selected':'')+'>普通用户</option><option value="管理员"'+(USER_F.r==='管理员'?' selected':'')+'>管理员</option></select>'+
+    '<button class="btn primary sm" id="uSearch">搜索</button>'+
+  '</div></div>'+
+  '<div class="tbl-wrap"><table class="tbl"><thead><tr><th>头像</th><th>用户名</th><th>手机号</th><th>角色</th><th>备注</th><th>创建时间</th><th>使用权限</th><th>状态</th><th>操作</th></tr></thead><tbody>'+rows+'</tbody></table></div>'+
+  (list.length?pager(pg,list.length,size):'<div style="padding:30px;text-align:center;color:var(--sub);">无数据</div>')+'</div>';
+  var w=function(){USER_F.kw=document.getElementById('uKw').value;USER_F.p=document.getElementById('uP').value;USER_F.r=document.getElementById('uR').value;renderUsers(c);};
+  document.getElementById('uSearch').onclick=w;
+  bindPager(c,function(p){renderUsers(c,p);});
+  document.getElementById('addUser').onclick=function(){
+    dialog('新建用户','<div class="dform"><label>用户名</label><input class="input" id="nuN"><label>手机号</label><input class="input" id="nuP"><label>角色</label><select class="sel" id="nuR"><option>普通用户</option><option>管理员</option></select><label>使用权限</label>'+permChkHtml('nuC','nuW','nuL',null)+'</div>','<button class="btn sm">取消</button><button class="btn primary sm ok">保存</button>',function(m){
+      var n=document.getElementById('nuN').value.trim();
+      var p=document.getElementById('nuP').value.trim();
+      if(!n||!p){toast('请填写用户名和手机号');return;}
+      USERS.unshift({u:n,p:p,r:document.getElementById('nuR').value,note:'—',date:'2026-09-14 10:00:00',ok:true,perms:{c:document.getElementById('nuC').checked,w:document.getElementById('nuW').checked,l:document.getElementById('nuL').checked}});
+      m.remove();toast('用户已创建');renderUsers(c);
+    });
+  };
+  c.querySelectorAll('button[data-v]').forEach(function(b){b.onclick=function(){go(b.getAttribute('data-v'));};});
+  c.querySelectorAll('#content .tbl button.link:not(.danger):not([data-v])').forEach(function(b){
+    b.onclick=function(){
+      var i=parseInt(b.getAttribute('data-i'));
+      var u=USERS[i];
+      dialog('编辑用户',
+        '<div class="dform"><label>用户名</label><input class="input" id="euN" value="'+esc(u.u)+'"><label>手机号</label><input class="input" id="euP" value="'+esc(u.p)+'"><label>角色</label><select class="sel" id="euR"><option value="普通用户"'+(u.r==='普通用户'?' selected':'')+'>普通用户</option><option value="管理员"'+(u.r==='管理员'?' selected':'')+'>管理员</option></select><label>备注</label><input class="input" id="euT" value="'+esc(u.note==='—'?'':u.note)+'"><label>使用权限</label>'+permChkHtml('euC','euW','euL',u)+'<label>状态</label><select class="sel" id="euS"><option value="true"'+(u.ok?' selected':'')+'>启用</option><option value="false"'+(u.ok?'':' selected')+'>停用</option></select></div>',
+        '<button class="btn sm">取消</button><button class="btn primary sm ok">保存</button>',
+        function(m){
+          USERS[i].u=document.getElementById('euN').value;
+          USERS[i].p=document.getElementById('euP').value;
+          USERS[i].r=document.getElementById('euR').value;
+          USERS[i].note=document.getElementById('euT').value||'—';
+          USERS[i].perms={c:document.getElementById('euC').checked,w:document.getElementById('euW').checked,l:document.getElementById('euL').checked};
+          USERS[i].ok=document.getElementById('euS').value==='true';
+          m.remove();toast('用户信息已更新');renderUsers(c);
+        });
+    };
+  });
+  c.querySelectorAll('.tbl .switch').forEach(function(s){
+    s.onclick=function(){
+      var i=parseInt(s.getAttribute('data-i'));
+      USERS[i].ok=!USERS[i].ok;
+      toast('已'+(USERS[i].ok?'启用':'停用')+'用户「'+USERS[i].u+'」');
+      renderUsers(c);
+    };
+  });
+  c.querySelectorAll('.tbl button.link.danger').forEach(function(b){
+    b.onclick=function(){
+      var i=parseInt(b.getAttribute('data-i'));
+      dialog('删除用户','确定删除用户「'+esc(USERS[i].u)+'（'+esc(USERS[i].p)+'）」吗？删除后不可恢复。','<button class="btn sm">取消</button><button class="btn primary sm ok" style="background:var(--red);">删除</button>',function(m){
+        USERS.splice(i,1);m.remove();toast('用户已删除');renderUsers(c);
+      });
+    };
+  });
+}
+
+/* ===== 分类管理（8个物流分类） ===== */
+function renderCats(c){
+  var rows=CATS.map(function(x,i){
+    var mc=MODELS.filter(function(m){return m.c===x;}).length;
+    var ai=AI_IMGS.filter(function(m){return m.c===x;}).length+LIB_IMGS.filter(function(m){return m.c===x;}).length;
+    return '<tr><td><div style="display:flex;align-items:center;gap:10px;"><div class="ph" style="width:34px;height:34px;border-radius:8px;background:'+ph(x)+';"></div><b>'+x+'</b></div></td>'+
+    '<td><span class="tag blue">模型</span> <span class="tag">AI图片</span> <span class="tag">设计图片</span></td>'+
+    '<td>'+mc+'</td><td>'+ai+'</td><td>'+esc(String(i+1))+'</td><td><span class="tag green">启用</span></td>'+
+    '<td style="white-space:nowrap;"><button class="btn link" data-i="'+i+'">编辑</button><button class="btn link danger" data-i="'+i+'">删除</button></td></tr>';
+  }).join('');
+  c.innerHTML='<div class="panel"><div class="panel-hd"><b>分类管理</b><button class="btn primary sm" id="addCat">+ 新建分类</button></div>'+
+  '<div class="panel-bd" style="font-size:12px;color:var(--sub);">管理平台模型 / AI图片 / 设计图片的类型分类，当前共 '+CATS.length+' 个物流场景分类。</div>'+
+  '<div class="tbl-wrap"><table class="tbl"><thead><tr><th>分类名称</th><th>关联类型</th><th>模型数</th><th>图片数</th><th>排序</th><th>状态</th><th>操作</th></tr></thead><tbody>'+rows+'</tbody></table></div></div>';
+  document.getElementById('addCat').onclick=function(){
+    dialog('新建分类','<div class="dform"><label>分类名称</label><input class="input" placeholder="请输入分类名称"><label>关联类型</label><select class="sel"><option>模型</option><option>AI图片</option><option>设计图片</option></select><label>排序</label><input class="input" value="'+(CATS.length+1)+'"></div>','<button class="btn sm">取消</button><button class="btn primary sm ok">保存</button>',function(m){
+      toast('原型演示：分类已创建');m.remove();
+    });
+  };
+  c.querySelectorAll('.tbl button.link.danger').forEach(function(b){
+    b.onclick=function(){
+      var i=parseInt(b.getAttribute('data-i'));
+      dialog('删除分类','确定删除分类「'+esc(CATS[i])+'」吗？删除后不可恢复。','<button class="btn sm">取消</button><button class="btn primary sm ok" style="background:var(--red);">删除</button>',function(m){
+        CATS.splice(i,1);m.remove();toast('分类已删除');renderCats(c);
+      });
+    };
+  });
+  c.querySelectorAll('.tbl button.link:not(.danger)').forEach(function(b){
+    b.onclick=function(){
+      var i=parseInt(b.getAttribute('data-i'));
+      dialog('编辑分类','<div class="dform"><label>分类名称</label><input class="input" value="'+esc(CATS[i])+'"><label>关联类型</label><select class="sel"><option>模型</option><option>AI图片</option><option>设计图片</option></select><label>排序</label><input class="input" value="'+(i+1)+'"></div>','<button class="btn sm">取消</button><button class="btn primary sm ok">保存</button>',function(m){toast('原型演示：分类已更新');m.remove();});
+    };
+  });
+}
+/* ===== AI图片 / 设计图片管理 ===== */
+var IMG_F={kw:'',cat:'',ok:''};
+function renderImgs(c,data,label){
+  var list=data.filter(function(m){
+    if(IMG_F.kw&&m.t.indexOf(IMG_F.kw)<0)return false;
+    if(IMG_F.cat&&m.c!==IMG_F.cat)return false;
+    if(IMG_F.ok!==''&&String(m.ok)!==IMG_F.ok)return false;
+    return true;
+  });
+  var rows=list.map(function(m){
+    return '<tr><td><div class="ph" style="background:'+ph(m.t)+';width:60px;height:44px;"></div></td>'+
+    '<td><b>'+esc(m.t)+'</b></td><td><span class="tag blue">'+esc(m.c)+'</span></td>'+
+    '<td style="color:var(--sub);font-size:12px;white-space:nowrap;">'+m.date+'</td><td>'+m.gen+'</td><td>'+m.fv+'</td><td>'+m.dl+'</td>'+
+    '<td><button class="switch'+(m.ok?' on':'')+'" data-i="'+data.indexOf(m)+'" title="点击切换启用/停用"></button></td>'+
+    '<td style="white-space:nowrap;"><button class="btn link" data-i="'+data.indexOf(m)+'">编辑</button><button class="btn link danger" data-i="'+data.indexOf(m)+'">删除</button></td></tr>';
+  }).join('');
+  c.innerHTML='<div class="panel"><div class="panel-hd"><b>'+label+'</b></div>'+
+  '<div class="panel-bd"><div class="toolbar">'+
+    '<div class="search"><span style="color:var(--sub);">图片名称</span><input class="input" id="iKw" placeholder="请输入图片名称" value="'+esc(IMG_F.kw||'')+'"></div>'+
+    '<select class="sel" id="iCat"><option value="">全部分类</option>'+CATS.map(function(x){return '<option '+(IMG_F.cat===x?'selected':'')+'>'+x+'</option>';}).join('')+'</select>'+
+    '<select class="sel" id="iOk"><option value="">状态</option><option value="true"'+(IMG_F.ok==='true'?' selected':'')+'>启用</option><option value="false"'+(IMG_F.ok==='false'?' selected':'')+'>停用</option></select>'+
+    '<button class="btn primary sm" id="iSearch">查询</button><button class="btn sm" id="iReset">重置</button>'+
+  '</div></div>'+
+  '<div class="tbl-wrap"><table class="tbl"><thead><tr><th>缩略图</th><th>标题</th><th>分类</th><th>上传时间</th><th>在线生图数</th><th>收藏数</th><th>下载次数</th><th>状态</th><th>操作</th></tr></thead><tbody>'+rows+'</tbody></table></div>'+
+  (list.length?'':'<div style="padding:30px;text-align:center;color:var(--sub);">无数据</div>')+'</div>';
+  var w=function(){IMG_F.kw=document.getElementById('iKw').value;IMG_F.cat=document.getElementById('iCat').value;IMG_F.ok=document.getElementById('iOk').value;renderImgs(c,data,label);};
+  document.getElementById('iSearch').onclick=w;
+  document.getElementById('iReset').onclick=function(){IMG_F={kw:'',cat:'',ok:''};renderImgs(c,data,label);};
+  c.querySelectorAll('.switch').forEach(function(s){
+    s.onclick=function(){
+      var i=parseInt(s.getAttribute('data-i'));
+      data[i].ok=!data[i].ok;
+      toast('已'+(data[i].ok?'启用':'停用')+'图片「'+data[i].t+'」');
+      renderImgs(c,data,label);
+    };
+  });
+  c.querySelectorAll('button.link.danger').forEach(function(b){
+    b.onclick=function(){
+      var i=parseInt(b.getAttribute('data-i'));
+      dialog('删除图片','确定删除图片「'+esc(data[i].t)+'」吗？删除后不可恢复。','<button class="btn sm">取消</button><button class="btn primary sm ok" style="background:var(--red);">删除</button>',function(d){
+        data.splice(i,1);d.remove();toast('图片已删除');renderImgs(c,data,label);
+      });
+    };
+  });
+  c.querySelectorAll('button.link:not(.danger)').forEach(function(b){
+    b.onclick=function(){
+      var i=parseInt(b.getAttribute('data-i'));
+      var m=data[i];
+      dialog('编辑图片',
+        '<div class="dform"><label>图片标题</label><input class="input" id="eiT" value="'+esc(m.t)+'"><label>图片类别</label><select class="sel" id="eiC">'+CATS.map(function(x){return '<option '+(m.c===x?'selected':'')+'>'+x+'</option>';}).join('')+'</select><label>描述信息</label><textarea class="input" id="eiD" style="height:64px;resize:none;">'+esc(m.desc||'')+'</textarea></div>',
+        '<button class="btn sm">取消</button><button class="btn primary sm ok">保存</button>',
+        function(d){
+          data[i].t=document.getElementById('eiT').value;
+          data[i].c=document.getElementById('eiC').value;
+          data[i].desc=document.getElementById('eiD').value;
+          d.remove();toast('图片「'+data[i].t+'」已更新');renderImgs(c,data,label);
+        });
+    };
+  });
+}
+
+/* ===== 生图记录 ===== */
+var GEN_F={way:'',kw:'',st:''};
+function renderGenLog(c,pg){
+  pg=pg||1;var size=8;
+  var list=GENLOG.filter(function(r){
+    if(GEN_F.way&&r.way!==GEN_F.way)return false;
+    if(GEN_F.st&&r.st!==GEN_F.st)return false;
+    if(GEN_F.kw&&r.u.indexOf(GEN_F.kw)<0&&r.id.indexOf(GEN_F.kw)<0)return false;
+    return true;
+  });
+  var rows=list.slice((pg-1)*size,pg*size).map(function(r){
+    return '<tr><td><div class="ph" style="width:46px;height:34px;background:'+ph(r.m)+';"></div></td>'+
+    '<td><b style="font-size:13px;">'+esc(r.u)+'</b><div style="font-size:11px;color:var(--sub);">'+esc(r.p)+'</div></td>'+
+    '<td>'+wayTag(r.way)+'</td><td>'+esc(r.m)+'</td><td><span class="rid">'+r.id+'</span></td>'+
+    '<td style="color:var(--sub);font-size:12px;white-space:nowrap;">'+r.t+'</td>'+
+    '<td style="color:var(--sub);font-size:12px;">'+r.cost+'</td>'+
+    '<td>'+stTag(r.st)+'</td>'+
+    '<td style="white-space:nowrap;"><button class="btn link" data-i="'+GENLOG.indexOf(r)+'">查看</button></td></tr>';
+  }).join('');
+  c.innerHTML='<div class="panel"><div class="panel-hd"><b>生图记录</b><span style="font-size:12px;color:var(--sub);">对话生图 / 在线工作流</span></div>'+
+  '<div class="panel-bd"><div class="toolbar">'+
+    '<div class="search"><span style="color:var(--sub);">用户 / 记录ID</span><input class="input" id="gKw" placeholder="请输入手机号或用户名" value="'+esc(GEN_F.kw||'')+'"></div>'+
+    '<select class="sel" id="gWay"><option value="">全部生图方式</option><option value="对话生图"'+(GEN_F.way==='对话生图'?' selected':'')+'>对话生图</option><option value="在线工作流"'+(GEN_F.way==='在线工作流'?' selected':'')+'>在线工作流</option></select>'+
+    '<select class="sel" id="gSt"><option value="">全部状态</option><option value="成功"'+(GEN_F.st==='成功'?' selected':'')+'>生图成功</option><option value="失败"'+(GEN_F.st==='失败'?' selected':'')+'>生图失败</option><option value="执行中"'+(GEN_F.st==='执行中'?' selected':'')+'>执行中</option><option value="已取消"'+(GEN_F.st==='已取消'?' selected':'')+'>已取消</option></select>'+
+    '<button class="btn primary sm" id="gSearch">查询</button><button class="btn sm" id="gReset">重置</button>'+
+  '</div></div>'+
+  '<div class="tbl-wrap"><table class="tbl"><thead><tr><th>缩略图</th><th>用户</th><th>生图方式</th><th>模型</th><th>记录ID</th><th>生成时间</th><th>耗时</th><th>状态</th><th>操作</th></tr></thead><tbody>'+rows+'</tbody></table></div>'+
+  (list.length?pager(pg,list.length,size):'<div style="padding:30px;text-align:center;color:var(--sub);">无数据</div>')+'</div>';
+  var w=function(){GEN_F.kw=document.getElementById('gKw').value;GEN_F.way=document.getElementById('gWay').value;GEN_F.st=document.getElementById('gSt').value;renderGenLog(c);};
+  document.getElementById('gSearch').onclick=w;
+  document.getElementById('gReset').onclick=function(){GEN_F={way:'',kw:'',st:''};renderGenLog(c);};
+  bindPager(c,function(p){renderGenLog(c,p);});
+  c.querySelectorAll('button[data-i]').forEach(function(b){
+    b.onclick=function(){
+      var r=GENLOG[parseInt(b.getAttribute('data-i'))];
+      dialog('生图记录详情',
+        '<div style="display:flex;gap:16px;"><div class="ph" style="width:180px;height:132px;background:'+ph(r.m)+';border-radius:8px;flex-shrink:0;"></div>'+
+        '<div style="font-size:12px;line-height:2;color:#374151;">'+
+          '<div><b>用户：</b>'+esc(r.u)+'（'+esc(r.p)+'）</div>'+
+          '<div><b>生图方式：</b><span class="tag blue">'+r.way+'</span></div>'+
+          '<div><b>使用模型：</b>'+esc(r.m)+'</div>'+
+          '<div><b>生成尺寸：</b>'+esc(r.sz)+'</div>'+
+          '<div><b>生成时间：</b>'+r.t+'（'+r.cost+'）</div>'+
+          '<div><b>状态：</b>'+stTag(r.st)+'</div>'+
+        '</div></div>'+
+        '<div style="margin-top:14px;font-size:12px;"><b>提示词：</b><div style="background:#F8F9FC;border:1px solid var(--line);border-radius:7px;padding:10px 12px;margin-top:6px;color:#374151;line-height:1.7;">'+esc(r.prompt)+'</div></div>'+
+        '<div style="margin-top:10px;font-size:12px;color:var(--sub);">记录ID：'+r.id+'</div>',
+      '<button class="btn primary sm ok">关闭</button>',function(m){m.remove();});
+    };
+  });
+}
+
+/* ===== 训练记录 ===== */
+var TRAIN_F={kw:'',st:''};
+function renderTrainLog(c,pg){
+  pg=pg||1;var size=7;
+  var list=TRAINLOG.filter(function(r){
+    if(TRAIN_F.st&&r.st!==TRAIN_F.st)return false;
+    if(TRAIN_F.kw&&r.u.indexOf(TRAIN_F.kw)<0&&r.id.indexOf(TRAIN_F.kw)<0)return false;
+    return true;
+  });
+  var rows=list.slice((pg-1)*size,pg*size).map(function(r){
+    var pbar='<div style="display:flex;align-items:center;gap:8px;"><div style="width:120px;height:6px;background:#EEF0F5;border-radius:4px;overflow:hidden;"><div style="height:100%;width:'+r.prog+'%;background:'+(r.st==='失败'?'#DC2626':'#1D4ED8')+';"></div></div><span style="font-size:10px;color:var(--sub);">'+r.prog+'%</span></div>';
+    return '<tr><td><div class="ph" style="width:46px;height:34px;background:'+ph(r.base)+';"></div></td>'+
+    '<td><b style="font-size:13px;">'+esc(r.name)+'</b><div style="font-size:11px;color:var(--sub);">'+esc(r.u)+'</div></td>'+
+    '<td>'+esc(r.base)+'</td><td><span class="rid">'+r.id+'</span></td>'+
+    '<td style="color:var(--sub);font-size:12px;white-space:nowrap;">'+r.t+'</td>'+
+    '<td style="color:var(--sub);font-size:12px;">'+r.cost+'</td>'+
+    '<td>'+pbar+'</td>'+
+    '<td>'+stTag(r.st)+(r.st==='失败'?'<div class="rwhy" style="max-width:220px;margin-top:4px;" title="'+esc(r.why||'')+'">'+esc((r.why||'').slice(0,26))+'…</div>':'')+'</td>'+
+    '<td style="white-space:nowrap;"><button class="btn link" data-i="'+TRAINLOG.indexOf(r)+'">更多信息</button></td></tr>';
+  }).join('');
+  c.innerHTML='<div class="panel"><div class="panel-hd"><b>训练记录</b></div>'+
+  '<div class="panel-bd"><div class="toolbar">'+
+    '<div class="search"><span style="color:var(--sub);">用户 / 记录ID</span><input class="input" id="tKw" placeholder="请输入手机号或用户名" value="'+esc(TRAIN_F.kw||'')+'"></div>'+
+    '<select class="sel" id="tSt"><option value="">全部状态</option><option value="成功"'+(TRAIN_F.st==='成功'?' selected':'')+'>训练成功</option><option value="失败"'+(TRAIN_F.st==='失败'?' selected':'')+'>训练失败</option><option value="执行中"'+(TRAIN_F.st==='执行中'?' selected':'')+'>执行中</option><option value="已取消"'+(TRAIN_F.st==='已取消'?' selected':'')+'>已取消</option></select>'+
+    '<button class="btn primary sm" id="tSearch">查询</button><button class="btn sm" id="tReset">重置</button>'+
+  '</div></div>'+
+  '<div class="tbl-wrap"><table class="tbl"><thead><tr><th>缩略图</th><th>训练名称</th><th>基底模型</th><th>记录ID</th><th>创建时间</th><th>耗时</th><th>进度</th><th>状态</th><th>操作</th></tr></thead><tbody>'+rows+'</tbody></table></div>'+
+  (list.length?pager(pg,list.length,size):'<div style="padding:30px;text-align:center;color:var(--sub);">无数据</div>')+'</div>';
+  var w=function(){TRAIN_F.kw=document.getElementById('tKw').value;TRAIN_F.st=document.getElementById('tSt').value;renderTrainLog(c);};
+  document.getElementById('tSearch').onclick=w;
+  document.getElementById('tReset').onclick=function(){TRAIN_F={kw:'',st:''};renderTrainLog(c);};
+  bindPager(c,function(p){renderTrainLog(c,p);});
+  c.querySelectorAll('button[data-i]').forEach(function(b){
+    b.onclick=function(){
+      var r=TRAINLOG[parseInt(b.getAttribute('data-i'))];
+      var s1='<div style="display:flex;gap:8px;flex-wrap:wrap;">',k;
+      for(k=1;k<=5;k++)s1+='<div class="ph" style="width:88px;height:66px;background:'+ph(r.name+k)+';border-radius:7px;position:relative;"><span style="position:absolute;left:5px;top:3px;font-size:9px;background:rgba(0,0,0,.35);color:#fff;border-radius:3px;padding:1px 5px;">样图'+k+'</span></div>';
+      s1+='</div>';
+      dialog('训练记录详情',
+        '<div style="font-size:12px;line-height:2;color:#374151;margin-bottom:12px;">'+
+          '<div><b>训练名称：</b>'+esc(r.name)+'</div>'+
+          '<div><b>用户：</b>'+esc(r.u)+'（'+esc(r.p)+'）</div>'+
+          '<div><b>基底模型：</b>'+esc(r.base)+'</div>'+
+          '<div><b>迭代步数：</b>'+r.steps+'　<b>数据集图片：</b>'+r.imgs+'张</div>'+
+          '<div><b>训练时间：</b>'+r.t+'（'+r.cost+'）</div>'+
+          '<div><b>状态：</b>'+stTag(r.st)+'</div>'+
+        '</div><div style="font-size:12px;color:var(--sub);margin-bottom:6px;">训练样图</div>'+s1+
+        '<div style="margin-top:10px;font-size:12px;color:var(--sub);">记录ID：'+r.id+'</div>',
+      '<button class="btn primary sm ok">关闭</button>',function(m){m.remove();});
+    };
+  });
+}
+
+/* ===== 账号下拉与登录 ===== */
+var userBox=document.getElementById('userBox'),userMenu=document.getElementById('userMenu');
+userBox.onclick=function(e){
+  e.stopPropagation();
+  userMenu.classList.toggle('open');
+  userBox.classList.toggle('open');
+};
+document.addEventListener('click',function(){
+  userMenu.classList.remove('open');userBox.classList.remove('open');
+});
+function reLogin(acc){
+  dialog('重新登录',
+    '<div class="dform"><label>账号</label><input class="input" id="rlAcc" value="'+(acc||'admin')+'"><label>密码</label><input class="input" type="password" id="rlPwd" value="123456"></div>',
+    '<button class="btn sm">取消</button><button class="btn primary sm ok">登录</button>',
+    function(m){
+      var a=document.getElementById('rlAcc').value;
+      if(a){document.getElementById('topUserName').textContent=a;document.getElementById('topUserRole').textContent='管理员';}
+      document.querySelector('.tb-user .ava').textContent=(a||'admin')[0].toUpperCase();
+      toast('登录成功');m.remove();
+    });
+}
+userMenu.querySelectorAll('.um-item').forEach(function(it){
+  it.onclick=function(){
+    var k=it.getAttribute('data-um');
+    userMenu.classList.remove('open');userBox.classList.remove('open');
+    if(k==='settings'){
+      dialog('账号设置',
+        '<div class="dform"><label>用户名</label><input class="input" value="admin"><label>手机号</label><input class="input" value="138888888888"><label>角色</label><input class="input" value="管理员" disabled style="background:#F3F4F6;"><label>新密码</label><input class="input" type="password" placeholder="留空则不修改"></div>',
+        '<button class="btn sm">取消</button><button class="btn primary sm ok">保存</button>',function(m){toast('原型演示：账号设置已保存');m.remove();});
+    }else if(k==='switch'){
+      reLogin('admin');
+    }else if(k==='logout'){
+      dialog('退出登录','确定要退出当前账号吗？','<button class="btn sm">取消</button><button class="btn primary sm ok" style="background:var(--red);">退出</button>',function(m){
+        document.getElementById('topUserName').textContent='未登录';
+        document.getElementById('topUserRole').textContent='';
+        document.querySelector('.tb-user .ava').textContent='?';
+        m.remove();
+        reLogin();
+      });
+    }
+  };
+});
+</script>
+</body>
+</html>

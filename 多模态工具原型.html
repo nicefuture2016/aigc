@@ -1,0 +1,2883 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>多模态工具 · 工具3多模态原型</title>
+<style>
+  :root{
+    --bg:#FFFFFF; --line:#E7EAF0; --text:#1B2430; --sub:#667085; --sub2:#98A2B3;
+    --blue:#1D4ED8; --blue2:#3B6FE0; --bluebg:#EAF1FD; --red:#C0392B; --redbg:#FCEBEC;
+    --green:#1E8E4E; --greenbg:#E7F6EC;
+  }
+  *{margin:0;padding:0;box-sizing:border-box;}
+  body{font-family:"PingFang SC","Microsoft YaHei","Segoe UI",sans-serif;background:#fff;color:var(--text);font-size:14px;min-height:100vh;display:flex;flex-direction:column;}
+  button{font-family:inherit;cursor:pointer;border:none;background:none;color:inherit;}
+  input,textarea{font-family:inherit;border:none;outline:none;background:none;}
+
+  /* ===== 顶栏（原平台版式） ===== */
+  .topbar{
+    background:#fff; border-bottom:1px solid var(--line); height:60px; padding:0 22px;
+    display:flex; align-items:center; gap:16px; flex-shrink:0; position:sticky; top:0; z-index:50;
+  }
+  .logo{display:flex; align-items:center; gap:8px; font-size:17px; font-weight:800; color:var(--text); white-space:nowrap; cursor:pointer;}
+  .logo .lic{width:30px;height:30px;border-radius:8px;background:var(--blue);color:#fff;display:flex;align-items:center;justify-content:center;}
+  .logo em{font-style:normal;color:var(--blue);}
+  .top-mid{display:flex; align-items:center; gap:6px; margin-left:18px;}
+  .top-mid a{font-size:13px; color:var(--text); padding:5px 8px; border-radius:6px;}
+  .top-mid a:hover{color:var(--blue);}
+  .top-search{display:flex; align-items:center; gap:6px; border:1px solid var(--line); border-radius:8px; padding:6px 12px; color:var(--sub2); font-size:12px; width:220px; background:#F8FAFD;}
+  .top-search input{flex:1; font-size:12px;}
+  .top-right{margin-left:auto; display:flex; align-items:center; gap:6px;}
+  .tb-btn{font-size:13px; border-radius:8px; padding:7px 16px; border:1px solid var(--line); color:var(--text); position:relative; transition:all .15s;}
+  .tb-btn:hover{border-color:var(--blue); color:var(--blue);}
+  .tb-btn.primary{background:var(--blue); color:#fff; border-color:var(--blue); font-weight:600;}
+  .tb-btn.primary:hover{background:var(--blue2);}
+  .tb-btn.info{background:#F2F4F8; border-color:transparent;}
+  .tb-user{display:flex; align-items:center; gap:6px; padding:4px 6px; border-radius:8px; cursor:pointer; position:relative;}
+  .tb-user:hover{background:#F2F4F8;}
+  .tb-user .ava{width:30px;height:30px;border-radius:50%;background:#E4EAF5;color:var(--blue);display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;}
+  .tb-user .uid{font-size:13px; color:var(--text); font-weight:600;}
+  .tb-user .arr{font-size:15px; color:var(--sub2); line-height:1;}
+
+  /* 下拉 */
+  .dd{position:absolute; top:calc(100% + 6px); right:0; background:#fff; border:1px solid var(--line); border-radius:12px; box-shadow:0 12px 32px rgba(16,24,40,.14); min-width:168px; padding:6px; display:none; z-index:60;}
+  .dd.open{display:block;}
+  .dd .mi{font-size:13px; padding:9px 12px; border-radius:8px; cursor:pointer; color:var(--text); white-space:nowrap;}
+  .dd .mi:hover{background:var(--bluebg); color:var(--blue);}
+  .dd .mi.new{color:var(--blue); font-weight:600;}
+  .dd .sep{height:1px; background:var(--line); margin:5px 4px;}
+  .dd .uhead{display:flex; align-items:center; gap:8px; padding:8px 10px 10px; border-bottom:1px solid var(--line); margin-bottom:4px;}
+  .dd .uhead .ava{width:34px;height:34px;border-radius:50%;background:var(--blue);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:14px;}
+  .dd .uhead .un{font-size:13px; font-weight:700;}
+  .dd .uhead .vip{font-size:10px; color:#B7791F; background:#FDF3E3; border-radius:4px; padding:1px 6px; margin-top:2px; display:inline-block;}
+
+  /* ===== 核心功能区（常驻） ===== */
+  .core{display:flex; justify-content:center; gap:24px; padding:26px 22px 6px; flex-wrap:wrap; max-width:1200px; margin:0 auto; width:100%;}
+  .core .ent{width:176px; text-align:center; cursor:pointer; border:1px solid var(--line); border-radius:14px; padding:18px 10px 14px; background:#fff; transition:all .15s; position:relative;}
+  .core .ent:hover{box-shadow:0 8px 24px rgba(29,78,216,.12); border-color:#C7D6F5; transform:translateY(-2px);}
+  .core .ent .ic{width:56px;height:56px;margin:0 auto 10px;border-radius:14px;background:#F4F6FA;color:var(--text);display:flex;align-items:center;justify-content:center;}
+  .core .ent h3{font-size:15px; font-weight:700;}
+  .core .ent p{font-size:11px; color:var(--sub); margin-top:3px;}
+  .core .ent .newtag{display:inline-block; font-size:10px; color:var(--blue); background:var(--bluebg); border-radius:4px; padding:1px 7px; margin-top:4px; font-weight:600;}
+
+  /* ===== 主导航行（常驻） ===== */
+  .navrow{display:flex; justify-content:center; gap:8px; padding:8px 22px 2px; flex-shrink:0; max-width:1200px; margin:0 auto; width:100%;}
+  .navrow button{font-size:14px; color:var(--text); padding:6px 16px; border-radius:8px;}
+  .navrow button:hover{color:var(--blue); background:var(--bluebg);}
+  .navrow button.active{color:var(--blue); font-weight:700; background:var(--bluebg);}
+
+  /* ===== 视图 ===== */
+  main{flex:1; min-height:0;}
+  .view{display:none; max-width:1200px; margin:0 auto; padding:6px 22px 30px;}
+  .view.active{display:block;}
+  .page-title{font-size:16px; font-weight:700; margin:14px 0 4px;}
+  .page-sub{font-size:12px; color:var(--sub); margin-bottom:14px;}
+
+  /* 横幅（首页） */
+  .banner{display:flex; align-items:center; gap:14px; background:linear-gradient(90deg,#1D4ED8,#3B6FE0); color:#fff; border-radius:12px; padding:14px 20px; margin:14px 22px 6px; font-size:13px;}
+  .banner b{font-size:14px;}
+
+  /* 区块 */
+  .sec-head{display:flex; align-items:center; margin:22px 0 12px;}
+  .sec-head h2{font-size:16px; font-weight:700;}
+  .sec-head .all{margin-left:auto; font-size:13px; color:var(--blue); cursor:pointer;}
+  .grid5{display:grid; grid-template-columns:repeat(auto-fill,minmax(180px,1fr)); gap:14px;}
+  .grid4{display:grid; grid-template-columns:repeat(auto-fill,minmax(220px,1fr)); gap:14px;}
+  .gridm{display:grid; grid-template-columns:repeat(auto-fill,minmax(180px,1fr)); gap:14px;}
+  .ph{background:linear-gradient(135deg,#3B6FE0,#7BA3EE); border-radius:10px; aspect-ratio:1/1; display:flex; align-items:center; justify-content:center; color:#fff; font-size:12px; font-weight:600; position:relative; overflow:hidden;}
+  .ph.g2{background:linear-gradient(135deg,#1E5A44,#67A98B);} .ph.g3{background:linear-gradient(135deg,#8A6A3E,#C9A87C);}
+  .ph.g4{background:linear-gradient(135deg,#5B4B8A,#9C8FD0);} .ph.g5{background:linear-gradient(135deg,#7A4D00,#C79A4B);}
+  .ph.g6{background:linear-gradient(135deg,#3E5A6B,#7E9BAE);}
+  .mcard{background:#fff; border:1px solid var(--line); border-radius:12px; overflow:hidden; transition:box-shadow .15s;}
+  .mcard:hover{box-shadow:0 8px 22px rgba(16,24,40,.08);}
+  .mcard .ph{border-radius:0;}
+  .mcard .body{padding:9px 11px 10px;}
+  .mcard .t{font-size:13px; font-weight:600; line-height:1.4; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
+  .mcard .tagrow{display:flex; gap:6px; margin-bottom:6px;}
+  .tag{font-size:10px; border-radius:4px; padding:1px 6px; background:var(--bluebg); color:var(--blue);}
+  .tag.ck{background:#F0EBFA; color:#6B4FA0;}
+  .tag.sd{background:#E7F6EC; color:#1E8E4E;}
+  .stats{display:flex; gap:10px; font-size:11px; color:var(--sub); margin-top:6px;}
+  .stats i{font-style:normal; display:inline-flex; align-items:center; gap:2px;}
+  .corner-tag{position:absolute; top:6px; right:6px; font-size:9px; font-weight:600; border-radius:4px; padding:2px 7px; color:#fff; z-index:2;}
+  .corner-tag.official{background:rgba(29,78,216,.82);}
+  .corner-tag.mine{background:rgba(217,119,6,.88);}
+
+  /* ===== 筛选 ===== */
+  .fbar{display:flex; gap:8px; flex-wrap:wrap; align-items:center; margin-bottom:12px;}
+  .fbar .lb{font-size:12px; color:var(--sub);}
+  .fchip{font-size:12px; padding:5px 13px; border:1px solid var(--line); border-radius:999px; color:var(--sub); background:#fff; transition:all .15s;}
+  .fchip:hover{border-color:var(--blue); color:var(--blue);}
+  .fchip.active{background:var(--blue); color:#fff; border-color:var(--blue); font-weight:600;}
+
+  /* ===== 对话生图 ===== */
+  .chatwrap{display:flex; gap:14px; height:calc(100vh - 120px); min-height:420px; position:relative; transition:padding-right .25s ease;}
+  .conv{flex:0 0 190px; flex-shrink:0; min-width:190px; background:#fff; border:1px solid var(--line); border-radius:12px; padding:10px; display:flex; flex-direction:column; min-height:0;}
+  .conv .new{background:var(--blue); color:#fff; border-radius:8px; padding:8px; font-size:13px; font-weight:600; margin-bottom:10px;}
+  .conv .new:hover{background:var(--blue2);}
+  .conv .item{padding:7px 9px; border-radius:7px; font-size:12px; margin-bottom:3px; display:flex; gap:6px; transition:background .15s;}
+  .conv .item:hover{background:#F2F6FD;}
+  .conv .item.active{background:var(--bluebg); color:var(--blue); font-weight:600;}
+  .conv .item .d{color:var(--sub); font-size:10px; margin-left:auto; white-space:nowrap;}
+  .chat{flex:1; min-width:0; display:flex; flex-direction:column; background:#fff; border:1px solid var(--line); border-radius:12px; min-height:0;}
+  .chathead{padding:10px 14px; border-bottom:1px solid var(--line); font-size:12px; color:var(--sub); display:flex; align-items:center; gap:8px;}
+  .chathead b{color:var(--text); font-size:13px;}
+  .badge{font-size:10px; background:var(--bluebg); color:var(--blue); border-radius:4px; padding:2px 7px; font-weight:600;}
+  .flow{flex:1; overflow-y:auto; padding:14px; display:flex; flex-direction:column; gap:12px;}
+
+  .empty{flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:10px; text-align:center; padding:20px;}
+  .empty .hi{width:56px;height:56px;border-radius:16px;background:var(--bluebg);color:var(--blue);display:flex;align-items:center;justify-content:center;font-size:24px;font-weight:800;}
+  .empty h2{font-size:16px; font-weight:700;}
+  .empty p{font-size:12px; color:var(--sub); max-width:440px; line-height:1.7;}
+  .empty .sugs{display:flex; gap:8px; flex-wrap:wrap; justify-content:center; margin-top:6px;}
+  .empty .sug{font-size:12px; border:1px dashed var(--blue); color:var(--blue); border-radius:999px; padding:7px 14px; cursor:pointer; background:#fff;}
+  .empty .sug:hover{background:var(--bluebg);}
+
+  .msg{display:flex; flex-direction:column; max-width:100%; width:100%;}
+  .msg.user{align-self:flex-end; align-items:flex-end; max-width:86%;}
+  .msg.ai{align-self:flex-start; align-items:flex-start;}
+  .bubble{padding:9px 13px; border-radius:12px; font-size:13px; line-height:1.6; word-break:break-word;}
+  .msg.user .bubble{background:var(--blue); color:#fff; border-bottom-right-radius:4px;}
+  .msg .time{font-size:10px; color:var(--sub2); margin-top:4px;}
+  .refthumb{margin-top:6px; border:1px solid var(--line); border-radius:8px; display:flex; gap:6px; padding:5px; background:#FAFBFD;}
+  .refthumb img{width:54px;height:54px;object-fit:cover;border-radius:6px;}
+  .gening{display:flex; align-items:center; gap:10px; padding:12px 14px; background:#F5F7FB; border-radius:12px; font-size:12px; color:var(--sub);}
+  .spinner{width:18px;height:18px;border:2px solid rgba(29,78,216,.22);border-top-color:var(--blue);border-radius:50%;animation:spin .8s linear infinite;}
+  @keyframes spin{to{transform:rotate(360deg);}}
+  .statusbar{display:flex; gap:6px; flex-wrap:wrap; align-items:center; margin-bottom:8px;}
+  .bub{font-size:11px; padding:3px 11px; border-radius:999px; display:inline-flex; align-items:center; gap:5px; white-space:nowrap;}
+  .bub .dot{width:6px;height:6px;border-radius:50%;}
+  .bub-ok{background:var(--greenbg); color:var(--green); font-weight:600;} .bub-ok .dot{background:#27AE60;}
+  .bub-fail{background:var(--redbg); color:var(--red); font-weight:600;} .bub-fail .dot{background:#E74C3C;}
+  .bub-info{background:transparent; border:1px solid #DCE3ED; color:var(--sub);} .bub-info b{font-weight:600; color:var(--text);}
+  .results{display:grid; grid-template-columns:repeat(auto-fill,minmax(150px,1fr)); gap:10px; width:100%;}
+  .rcard{border:1px solid var(--line); border-radius:10px; background:#fff; position:relative;}
+  .rplace{aspect-ratio:1/1; display:flex; align-items:center; justify-content:center; position:relative; color:#fff; font-size:12px; font-weight:600; border-radius:10px 10px 0 0; overflow:hidden;}
+  .rplace .ai-tag{position:absolute; bottom:6px; right:6px; font-size:9px; font-weight:400; color:rgba(255,255,255,.92); background:rgba(0,0,0,.32); padding:1px 7px; border-radius:4px;}
+  .rplace .more{position:absolute; top:6px; right:6px; width:26px; height:26px; border-radius:6px; z-index:6; background:rgba(0,0,0,.35); color:#fff; font-size:14px; display:flex; align-items:center; justify-content:center; letter-spacing:1px;}
+  .rplace .more:hover{background:rgba(0,0,0,.55);}
+  .imenu{position:absolute; top:36px; right:6px; background:#fff; border:1px solid var(--line); border-radius:8px; box-shadow:0 6px 18px rgba(16,24,40,.16); z-index:12; min-width:128px; padding:4px; display:none;}
+  .imenu.open{display:block;}
+  .imenu .mi{font-size:12px; padding:7px 12px; border-radius:6px; cursor:pointer;}
+  .imenu .mi:hover{background:#F2F6FD;}
+  .imenu .mi.danger{color:var(--red);}
+  .batchbar{display:flex; gap:6px; margin-top:9px; align-items:center; flex-wrap:wrap;}
+  .batchbar .ttl{font-size:11px; color:var(--sub); margin-right:2px;}
+  .batchbar button{font-size:11px; color:var(--blue); background:var(--bluebg); border-radius:5px; padding:4px 10px;}
+  .batchbar button:hover{background:#DCE8FB;}
+  .batchbar .sep{width:1px; height:14px; background:var(--line); margin:0 2px;}
+  .batchbar .danger{color:var(--red); background:var(--redbg);}
+
+  .inputbox{border-top:1px solid var(--line); padding:10px 12px; background:#FAFBFD; flex-shrink:0;}
+  .inrow{display:flex; align-items:flex-end; gap:8px;}
+  .uploadbtn{width:36px;height:36px;flex-shrink:0;border:1px solid var(--line);border-radius:9px;background:#fff;display:flex;align-items:center;justify-content:center;color:var(--sub);position:relative;}
+  .uploadbtn:hover{border-color:var(--blue);color:var(--blue);}
+  .uploadbtn .tip{position:absolute; bottom:calc(100% + 8px); left:50%; transform:translateX(-50%) translateY(4px); background:rgba(27,36,48,.94); color:#fff; font-size:11px; padding:6px 11px; border-radius:7px; white-space:nowrap; opacity:0; pointer-events:none; transition:all .15s; z-index:40;}
+  .uploadbtn .tip::after{content:""; position:absolute; top:100%; left:50%; transform:translateX(-50%); border:5px solid transparent; border-top-color:rgba(27,36,48,.94);}
+  .uploadbtn:hover .tip{opacity:1; transform:translateX(-50%) translateY(0);}
+  .infield{flex:1;background:#fff;border:1px solid var(--line);border-radius:9px;padding:7px 10px;min-height:36px;display:flex;flex-direction:column;gap:4px;}
+  .infield textarea{width:100%;font-size:13px;resize:none;height:20px;line-height:20px;padding-right:30px;}
+  .infield textarea::placeholder{color:var(--sub2);}
+  .infield{position:relative;}
+  .translatebtn{position:absolute; right:2px; bottom:2px; width:26px; height:26px; border-radius:7px; display:flex; align-items:center; justify-content:center; color:var(--sub); background:transparent;}
+  .translatebtn:hover{background:#EDF2FA; color:var(--blue);}
+  .translatebtn svg{pointer-events:none;}
+  .inref{display:flex;align-items:center;gap:6px;font-size:11px;color:var(--blue);flex-wrap:wrap;}
+  .inref img{width:38px;height:38px;object-fit:cover;border-radius:6px;border:1px solid var(--line);}
+  .inref .refitem{position:relative; display:inline-flex;}
+  .inref .refdel{position:absolute; top:-5px; right:-5px; width:15px;height:15px;border-radius:50%;background:rgba(0,0,0,.62);color:#fff;font-size:9px;display:flex;align-items:center;justify-content:center;cursor:pointer;line-height:1;}
+  .inref .refdel:hover{background:rgba(0,0,0,.85);}
+  .inref .x{color:var(--red);cursor:pointer;font-size:14px;padding:2px;}
+  .sendbtn{height:36px;padding:0 18px;flex-shrink:0;border-radius:9px;background:var(--blue);color:#fff;font-size:13px;font-weight:600;}
+  .sendbtn:hover{background:var(--blue2);}
+  .sendbtn:disabled{background:#A8B4C6;cursor:not-allowed;}
+  .settings{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px;}
+  .sel{position:relative;}
+  .sel>button{display:flex;align-items:center;gap:5px;border:1px solid var(--line);background:#fff;border-radius:8px;padding:5px 10px;font-size:12px;}
+  .sel>button:hover{border-color:var(--blue);}
+  .sel>button .l{color:var(--sub);font-size:11px;}
+  .sel>button .arr{font-size:15px;color:var(--sub2);margin-left:3px;line-height:1;}
+  .menu{position:absolute;bottom:calc(100% + 6px);left:0;background:#fff;border:1px solid var(--line);border-radius:10px;box-shadow:0 8px 24px rgba(16,24,40,.12);min-width:210px;padding:6px;z-index:30;display:none;}
+  .menu.open{display:block;}
+  .menu .mi{font-size:12px;padding:7px 10px;border-radius:7px;cursor:pointer;line-height:1.5;}
+  .menu .mi:hover{background:#F2F6FD;}
+  .menu .mi.active{background:var(--bluebg);color:var(--blue);font-weight:600;}
+  .menu .mi .sub{color:var(--sub2);font-size:10px;display:block;margin-top:1px;}
+  .foot{font-size:10px;color:var(--sub2);text-align:center;padding:6px 0 0;}
+
+  /* 对话生图 · 高级参数设置 */
+  .advsec{margin-top:8px;}
+  .advhd{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--line);background:#fff;border-radius:8px;padding:5px 10px;font-size:12px;color:var(--text);cursor:pointer;user-select:none;}
+  .advhd:hover{border-color:var(--blue);color:var(--blue);}
+  .advhd .hint{font-size:10px;color:var(--sub2);font-weight:400;}
+  .advhd .arr{font-size:15px;color:var(--sub2);margin-left:3px;line-height:1;transition:transform .2s;}
+  .advclose{display:none;margin-left:4px;border:1px solid var(--line);background:var(--bluebg);color:var(--blue);border-radius:6px;padding:2px 8px;font-size:11px;cursor:pointer;line-height:1.4;}
+  .advclose:hover{border-color:var(--blue);color:var(--blue);}
+  .advsec.open .advclose{display:inline-flex;align-items:center;}
+  .advsec.open .advhd .arr{transform:rotate(180deg);}
+  .advbd{display:none;margin-top:8px;padding:10px 11px;border:1px solid var(--line);border-radius:9px;background:#fff;}
+  .advsec.open .advbd{display:block;}
+  .advgroup{margin-bottom:10px;}
+  .advgroup:last-child{margin-bottom:0;}
+  .advgt{font-size:11px;font-weight:700;color:var(--sub);margin-bottom:6px;display:flex;align-items:center;gap:5px;}
+  .advgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:7px;}
+  .advgrid .f{display:flex;flex-direction:column;gap:3px;}
+  .advgrid .f label{font-size:10px;color:var(--sub);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .advgrid .f select,.advgrid .f input[type=text]{font-size:11px;border:1px solid var(--line);border-radius:6px;padding:4px 7px;background:#fff;height:27px;width:100%;box-sizing:border-box;}
+  .advgrid .f select:focus,.advgrid .f input[type=text]:focus{outline:none;border-color:var(--blue);}
+  .advgrid .f .sliderrow{display:flex;align-items:center;gap:6px;height:27px;}
+  .advgrid .f .sliderrow input[type=range]{flex:1;min-width:0;accent-color:var(--blue);}
+  .advgrid .f .sliderrow span{font-size:11px;color:var(--blue);font-weight:700;min-width:14px;text-align:center;}
+  /* 对话生图 · 生图记录抽屉 */
+  .chathead .libbtn{margin-left:auto;font-size:11px;color:var(--blue);background:var(--bluebg);border-radius:6px;padding:4px 12px;font-weight:600;border:1px solid transparent;}
+  .chathead .libbtn:hover{background:#DCE8FB;}
+  .chathead .libbtn.on{background:var(--blue);color:#fff;}
+  .genlibdrawer{position:absolute; top:0; right:0; bottom:0; width:320px; transform:translateX(115%); transition:transform .25s ease; overflow:hidden; background:#fff; border:1px solid var(--line); border-radius:12px; display:flex; flex-direction:column; min-height:0; z-index:20;}
+  .chatwrap.drawer-open .genlibdrawer{transform:translateX(0);}
+  .chatwrap.drawer-open{padding-right:334px;}
+  .dhead{display:flex;align-items:center;gap:6px;padding:10px 14px;border-bottom:1px solid var(--line);font-size:13px;font-weight:700;color:var(--text);flex-shrink:0;}
+  .dhead .dclose{margin-left:auto;width:26px;height:26px;border-radius:7px;display:flex;align-items:center;justify-content:center;color:var(--sub);font-size:16px;background:transparent;}
+  .dhead .dclose:hover{background:#F2F6FD;color:var(--text);}
+  .dbody{flex:1;overflow-y:auto;padding:12px;display:flex;flex-direction:column;gap:10px;}
+  .genlibbar{display:flex;gap:6px;flex-wrap:wrap;align-items:center;}
+  .genlibbar .tbtn{font-size:11px;color:var(--blue);background:var(--bluebg);border-radius:6px;padding:5px 12px;}
+  .genlibbar .tbtn:hover{background:#DCE8FB;}
+  .genlibtip{font-size:11px;color:var(--sub2);margin-left:auto;}
+  .genlibgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;}
+  .genlibdrawer .genlibgrid .mcard{border-radius:8px;}
+  .genlibdrawer .genlibgrid .mcard .ph{aspect-ratio:1/1;border-radius:0;font-size:9px;}
+  .genlibdrawer .genlibgrid .mcard .ph>span{font-size:9px;}
+  .genlibdrawer .genlibgrid .mcard .ph .corner-tag{font-size:8px;padding:1px 4px;}
+  .genlibdrawer .genlibgrid .mcard .body{padding:4px 2px 0;}
+  .genlibdrawer .genlibgrid .mcard .body .t{font-size:10px;line-height:1.3;font-weight:600;}
+  .genlibdrawer .genlibgrid .mcard .body .s{font-size:9px;margin-top:1px;}
+
+  /* 在线生图 */
+  .gen2{display:grid; grid-template-columns:minmax(0,1fr) 260px; gap:16px;}
+  .gform{display:flex; flex-direction:column; gap:12px;}
+  .gtabs{display:flex; gap:4px; border-bottom:2px solid var(--line);}
+  .gtabs button{font-size:13px; padding:8px 14px; color:var(--sub); border-bottom:2px solid transparent; margin-bottom:-2px;}
+  .gtabs button.active{color:var(--blue); border-color:var(--blue); font-weight:700;}
+  .grow{display:flex; gap:8px; flex-wrap:wrap; align-items:center; font-size:12px; color:var(--sub);}
+  .grow select,.grow .box{font-size:12px; border:1px solid var(--line); border-radius:6px; padding:5px 8px; background:#fff;}
+  .promptbox{border:1px solid var(--line); border-radius:8px; padding:8px; background:#fff;}
+  .promptbox textarea{width:100%; font-size:13px; min-height:64px; resize:vertical; line-height:1.6;}
+  .promptbox .tools{display:flex; align-items:center; gap:8px; margin-top:4px; font-size:11px; color:var(--sub);}
+  .promptbox .tools .tbtn{font-size:11px; color:var(--blue); border:1px solid var(--blue); border-radius:5px; padding:2px 8px;}
+  .genbtn{background:var(--blue); color:#fff; font-size:14px; font-weight:700; border-radius:8px; padding:10px; text-align:center;}
+  .genbtn:hover{background:var(--blue2);}
+  .paramsec{border:1px solid var(--line); border-radius:8px; padding:12px; background:#fff;}
+  .paramsec .pt{font-size:12px; font-weight:700; margin-bottom:8px;}
+  .paramsec .grid2{display:grid; grid-template-columns:1fr 1fr; gap:8px;}
+  .paramsec label{font-size:11px; color:var(--sub); display:block; margin-bottom:3px;}
+  .paramsec input,.paramsec select{width:100%; font-size:12px; border:1px solid var(--line); border-radius:6px; padding:5px 8px; background:#fff;}
+  .paramsec .fold{margin-top:8px; border-top:1px dashed var(--line); padding-top:8px; font-size:12px; color:var(--sub);}
+  .gpanel{display:none;}
+  .gpanel.active{display:block;}
+  .pptag{font-size:11px; font-weight:700; color:#4A7DBF; margin-bottom:4px;}
+  .ptip2{background:#FFF8F0; border:1px solid #F3D9B8; border-radius:8px; margin-top:8px; overflow:hidden;}
+  .ptip2-hd{font-size:11px; font-weight:700; color:#B4661A; padding:8px 10px; cursor:pointer; display:flex; justify-content:space-between; align-items:center; user-select:none;}
+  .ptip2-hd:hover{background:#FDF0DC;}
+  .ptip2-arr{transition:transform .2s; font-size:16px; color:#C98A3B; line-height:1;}
+  .ptip2.open .ptip2-arr{transform:rotate(180deg);}
+  .ptip2-words{display:none; flex-wrap:wrap; gap:6px; padding:0 10px 9px;}
+  .ptip2.open .ptip2-words{display:flex;}
+  .ptip2-words button{font-size:11px; line-height:1.35; border:none; border-radius:6px; padding:5px 9px; background:#F7B26B; color:#4A2E10; text-align:center;}
+  .ptip2-words button:hover{background:#F08A2C; color:#fff;}
+  .imode{display:flex; gap:6px; flex-wrap:wrap; margin-bottom:10px;}
+  .imode button{font-size:12px; border:1px solid var(--line); border-radius:16px; padding:5px 12px; color:var(--sub); background:#fff;}
+  .imode button.active{color:var(--blue); border-color:var(--blue); background:#EEF4FD; font-weight:600;}
+  .upbox{border:1px dashed var(--line); border-radius:8px; padding:18px; text-align:center; color:var(--sub); font-size:13px; background:#FAFBFC; line-height:1.7; margin-bottom:10px;}
+  .upnote{font-size:11px; color:#9AA4B2;}
+  .thumbrow{display:flex; gap:12px; margin-bottom:10px; font-size:11px; color:var(--sub);}
+  .thumbrow .tt{border:1px solid var(--line); border-radius:6px; padding:8px 14px; background:#fff;}
+  .libbar{display:flex; gap:8px; margin-bottom:14px; flex-wrap:wrap;}
+  .libbar .tbtn{font-size:12px; color:var(--blue); border:1px solid var(--blue); border-radius:5px; padding:5px 12px; background:#fff;}
+  .genbtn.orange{background:#F08A2C;}
+  .genbtn.orange:hover{background:#DD7A1C;}
+  #view-generate.libmode .sidepanel{display:none;}
+  #view-generate.libmode .gform{width:100%;}
+  .card.prev{min-height:300px; position:relative; display:flex; align-items:center; justify-content:center; margin-top:10px;}
+  .card .nodata{color:#B7BFCC; font-size:13px;}
+  .sidepanel{display:flex; flex-direction:column; gap:12px;}
+  .sidepanel .card{background:#fff; border:1px solid var(--line); border-radius:12px; padding:14px;}
+  .sidepanel .card h4{font-size:12px; margin-bottom:8px;}
+  .siderow{font-size:12px; color:var(--sub); padding:6px 8px; border-radius:6px; cursor:pointer;}
+  .siderow:hover{background:#F2F6FD;}
+  .siderow.active{background:var(--bluebg); color:var(--blue); font-weight:600;}
+
+  /* 训练 */
+  .steps{display:flex; margin-bottom:16px; font-size:12px; color:var(--sub); align-items:center; flex-wrap:wrap;}
+  .steps .st{padding:6px 14px; border:1px solid var(--line); border-radius:8px; background:#fff;}
+  .steps .st.active{background:var(--blue); color:#fff; border-color:var(--blue); font-weight:600;}
+  .steps .ar{color:#B9C4D4; margin:0 6px;}
+  .trainbody{display:grid; grid-template-columns:minmax(0,1fr) 250px; gap:20px;}
+  .dropzone{border:2px dashed #B9C8E4; border-radius:10px; padding:28px; text-align:center; background:#F8FAFE; color:var(--sub);}
+  .thumbgrid{display:grid; grid-template-columns:repeat(auto-fill,minmax(104px,1fr)); gap:8px; margin:10px 0;}
+  .tthumb{position:relative; border:1px solid var(--line); border-radius:8px; overflow:hidden; background:#fff;}
+  .tthumb-img{aspect-ratio:1/1; background-size:cover; background-position:center;}
+  .tthumb-tags{display:flex; flex-wrap:wrap; gap:3px; padding:4px;}
+  .tthumb-tags span{font-size:9px; background:#EAF1FB; color:#2E5FB0; border-radius:3px; padding:1px 5px;}
+  .tthumb-x{position:absolute; top:4px; right:4px; width:18px; height:18px; line-height:16px; text-align:center; background:rgba(0,0,0,.5); color:#fff; border-radius:50%; font-size:11px; cursor:pointer;}
+  .tthumb-x:hover{background:#E0514E;}
+  .dropzone .big{font-size:14px; color:var(--text); font-weight:600; margin-bottom:4px;}
+  .toolrow{display:flex; gap:8px; margin:10px 0; flex-wrap:wrap; align-items:center;}
+  .toolrow button{font-size:12px; border:1px solid var(--line); border-radius:6px; padding:5px 12px; background:#fff;}
+  .toolrow button:hover{border-color:var(--blue); color:var(--blue);}
+  .toolrow button.genbtn{background:var(--blue); color:#fff; border:none;}
+
+  /* ===== 在线工作流生图界面（ComfyUI风格画布） ===== */
+  .wfcanvas{border:1px solid #232B38; border-radius:12px; overflow:hidden; background:#10141B; display:flex; flex-direction:column; min-height:600px;}
+  .wftool{display:flex; align-items:center; gap:10px; padding:9px 14px; background:#1A212C; border-bottom:1px solid #2A3344; flex-wrap:wrap;}
+  .wftabs{display:flex; gap:2px; background:#121820; border-radius:7px; padding:3px;}
+  .wftab{font-size:12px; color:#9AA7BA; padding:4px 12px; border-radius:5px;}
+  .wftab.active{background:#2B3748; color:#fff;}
+  .wffile{font-size:11px; color:#8B96A8;}
+  .wftr{margin-left:auto; display:flex; gap:8px;}
+  .wficons{display:flex; gap:6px; align-items:center;}
+  .wficon{width:28px; height:28px; border-radius:7px; background:#222B3A; border:1px solid #33405A; color:#C4CFDE; display:flex; align-items:center; justify-content:center; cursor:pointer;}
+  .wficon:hover{border-color:#5A6B8C; color:#fff; background:#2A3446;}
+  .wfbtn{font-size:12px; color:#C4CFDE; border:1px solid #33405A; border-radius:7px; padding:5px 13px; background:#222B3A;}
+  .wfbtn:hover{border-color:#5A6B8C;}
+  .wfbtn.primary{background:#1D4ED8; border-color:#1D4ED8; color:#fff; font-weight:600;}
+  .wfbody{position:relative; min-height:760px;}
+  .wfstage{position:absolute; inset:0; min-height:760px; background:
+    radial-gradient(circle at 1px 1px, rgba(255,255,255,.05) 1px, transparent 0) 0 0/22px 22px, #10141B; overflow:hidden;}
+  .wflinks{position:absolute; inset:0; width:100%; height:100%; pointer-events:none;}
+  .wfnode{position:absolute; width:196px; background:#1B2330; border:1px solid #33405A; border-radius:9px; overflow:hidden; box-shadow:0 6px 18px rgba(0,0,0,.4); cursor:grab;}
+  .wfnode.dragging{cursor:grabbing; border-color:#4E7AD6; box-shadow:0 10px 26px rgba(0,0,0,.55);}
+  .wfnhead{font-size:11px; font-weight:600; color:#D6E0EE; background:#232D3F; padding:6px 9px; border-bottom:1px solid #33405A;}
+  .wfnbody{padding:7px 9px; display:flex; flex-direction:column; gap:5px;}
+  .wfnrow{font-size:10px; color:#9AA7BA; display:flex; align-items:center; gap:6px;}
+  .wfnrow label{color:#7E8CA0; flex-shrink:0;}
+  .wfnrow input,.wfnrow textarea{background:#121820; border:1px solid #2A3446; border-radius:5px; color:#D6E0EE; font-size:10px; padding:3px 6px; width:100%; font-family:inherit;}
+  .wfnrow textarea{resize:none; line-height:1.5;}
+  .port{width:9px; height:9px; border-radius:50%; background:#4E7AD6; flex-shrink:0;}
+  .port.in{background:#4E7AD6;}
+  .port.out{background:#67A98B;}
+  .wfsave{margin-top:4px;}
+  .wfsave-ph{height:118px; border:1px dashed #3A465E; border-radius:6px; display:flex; align-items:center; justify-content:center; color:#5E6B83; font-size:10px; background:#141B26; position:relative; overflow:hidden;}
+  .wfsave-ph .wfai{position:absolute; bottom:5px; right:6px; font-size:8px; background:rgba(0,0,0,.38); padding:1px 6px; border-radius:4px; color:#B9C4D6;}
+  .wfstatus{position:absolute; left:14px; bottom:12px; display:flex; gap:14px; font-size:10px; color:#7E8CA0; background:rgba(16,20,27,.85); border:1px solid #2A3446; border-radius:7px; padding:5px 11px;}
+
+  /* 页脚（原型已移除） */
+
+  .toast{position:fixed; left:50%; bottom:150px; transform:translateX(-50%) translateY(20px); background:rgba(27,36,48,.92); color:#fff; font-size:12px; padding:9px 16px; border-radius:8px; opacity:0; transition:all .25s; z-index:99; max-width:80%;}
+  .toast.show{opacity:1; transform:translateX(-50%) translateY(0);}
+  .overlay{position:fixed; inset:0; background:rgba(15,22,30,.62); z-index:80; display:none; align-items:center; justify-content:center; padding:20px;}
+  .overlay.open{display:flex;}
+  .oview{background:#fff; border-radius:12px; padding:12px; max-width:min(520px,92vw); width:100%;}
+  .oview .big{aspect-ratio:1/1; border-radius:8px; display:flex; align-items:center; justify-content:center; color:#fff; font-weight:600;}
+  .oview .bar{display:flex; justify-content:space-between; align-items:center; margin-top:9px;}
+  .oview .bar .l{font-size:12px; color:var(--sub);}
+  .oview .bar button{font-size:12px; color:var(--blue); padding:4px 10px; border-radius:6px;}
+
+  /* ===== ControlNet 参考图设置弹窗 ===== */
+  .cnoverlay{position:fixed; inset:0; background:rgba(15,22,30,.62); z-index:85; display:none; align-items:center; justify-content:center; padding:20px;}
+  .cnoverlay.open{display:flex;}
+  .cnview{background:#fff; border-radius:14px; padding:16px; max-width:min(960px,94vw); width:100%; max-height:92vh; overflow-y:auto;}
+  .cnview .head{display:flex; align-items:center; margin-bottom:12px;}
+  .cnview .head h3{font-size:15px; font-weight:700;}
+  .cnview .head .hdbtns{margin-left:auto; display:flex; gap:8px;}
+  .cnview .head .cancel{font-size:13px; color:var(--text); border:1px solid var(--line); border-radius:8px; padding:7px 18px; background:#fff;}
+  .cnview .head .cancel:hover{border-color:var(--sub2);}
+  .cnview .head .ok{margin-left:0; background:var(--blue); color:#fff; font-size:13px; font-weight:600; border-radius:8px; padding:7px 22px;}
+  .cnview .head .ok:hover{background:var(--blue2);}
+  .cnmain{display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:14px;}
+  .cnmain .side{border:1px solid var(--line); border-radius:10px; padding:10px;}
+  .cnmain .side .st{font-size:12px; font-weight:700; margin-bottom:8px; display:flex; align-items:center; gap:6px;}
+  .cnmain .side .st .cnt{font-size:10px; color:var(--sub); font-weight:400; background:#F2F4F8; border-radius:4px; padding:1px 6px;}
+  .cnthumbs{display:flex; gap:8px; flex-wrap:wrap;}
+  .cnthumb{width:84px; height:84px; border-radius:8px; position:relative; border:1px solid var(--line); overflow:hidden; flex-shrink:0;}
+  .cnthumb img{width:100%;height:100%;object-fit:cover;display:block;}
+  .cnthumb .noimg{width:100%;height:100%;display:flex;align-items:center;justify-content:center;color:var(--sub2);font-size:10px;background:#F7F8FA;}
+  .cnthumb .del{position:absolute; top:3px; right:3px; width:18px;height:18px;border-radius:50%;background:rgba(0,0,0,.55);color:#fff;font-size:10px;display:flex;align-items:center;justify-content:center;cursor:pointer;}
+  .cnthumb .del:hover{background:rgba(0,0,0,.8);}
+  .cnadd{width:84px; height:84px; border-radius:8px; border:1.5px dashed #B9C8E4; color:var(--blue); display:flex; flex-direction:column; align-items:center; justify-content:center; gap:3px; cursor:pointer; font-size:10px; background:#F8FAFE; flex-shrink:0;}
+  .cnadd:hover{background:var(--bluebg);}
+  .cnadd svg{width:18px;height:18px;}
+  .cnprev{width:100%; height:100%; min-height:150px; border-radius:8px; display:flex; align-items:center; justify-content:center; color:#fff; font-size:12px; font-weight:600; position:relative; overflow:hidden;}
+  .cnprev .lbl{position:absolute; bottom:6px; left:0; right:0; text-align:center; font-size:10px; font-weight:400; background:rgba(0,0,0,.28); padding:2px 0;}
+  .cnsel{display:flex; gap:7px; flex-wrap:wrap;}
+  .cnchip{font-size:11px; padding:6px 11px; border:1px solid var(--line); border-radius:999px; color:var(--text); background:#fff; cursor:pointer; transition:all .12s; white-space:nowrap;}
+  .cnchip:hover{border-color:var(--blue); color:var(--blue);}
+  .cnchip.active{background:var(--blue); color:#fff; border-color:var(--blue); font-weight:600;}
+  .cnchip.none{border-style:dashed;}
+  .cnseltip{font-size:11px; color:var(--sub); margin-top:10px; background:#F8FAFE; border:1px dashed #D3DEEF; border-radius:8px; padding:7px 11px;}
+  .cnbadge{position:absolute; left:3px; right:3px; bottom:3px; font-size:8px; background:rgba(0,0,0,.62); color:#fff; border-radius:4px; padding:1px 3px; text-align:center; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; line-height:1.4;}
+  .cnthumb.sel{border-color:var(--blue); box-shadow:0 0 0 2px var(--bluebg);}
+
+  /* ===== LoRA 风格模型选择弹窗 ===== */
+  .loroverlay{position:fixed; inset:0; background:rgba(15,22,30,.62); z-index:86; display:none; align-items:center; justify-content:center; padding:20px;}
+  .loroverlay.open{display:flex;}
+  .lorview{background:#fff; border-radius:14px; padding:16px; max-width:min(960px,94vw); width:100%; max-height:92vh; display:flex; flex-direction:column;}
+  .lorview .head{display:flex; align-items:center; gap:12px; margin-bottom:12px;}
+  .lorview .head h3{font-size:15px; font-weight:700; white-space:nowrap;}
+  .lorview .head .close{margin-left:auto; width:30px;height:30px;border-radius:8px;background:#F2F4F8;color:var(--text);font-size:16px;display:flex;align-items:center;justify-content:center;}
+  .lorview .head .close:hover{background:#E4E8F0;}
+  .lorsearch{flex:1; max-width:340px; display:flex; align-items:center; gap:6px; border:1px solid var(--line); border-radius:8px; padding:6px 11px; color:var(--sub2); background:#F8FAFD; font-size:12px;}
+  .lorsearch input{flex:1; font-size:12px;}
+  .lortabs{display:flex; gap:4px; border-bottom:2px solid var(--line); margin-bottom:10px;}
+  .lortabs button{font-size:13px; padding:7px 14px; color:var(--sub); border-bottom:2px solid transparent; margin-bottom:-2px;}
+  .lortabs button.active{color:var(--blue); border-color:var(--blue); font-weight:700;}
+  .lorcats{display:flex; gap:7px; flex-wrap:wrap; margin-bottom:12px;}
+  .lorcats button{font-size:11px; padding:5px 12px; border:1px solid var(--line); border-radius:999px; color:var(--sub); background:#fff;}
+  .lorcats button:hover{border-color:var(--blue); color:var(--blue);}
+  .lorcats button.active{background:var(--blue); color:#fff; border-color:var(--blue); font-weight:600;}
+  .lorgrid{display:grid; grid-template-columns:repeat(auto-fill,minmax(150px,1fr)); gap:12px; overflow-y:auto; padding-right:4px;}
+  .lorcard{background:#fff; border:1px solid var(--line); border-radius:10px; overflow:hidden; cursor:pointer; transition:all .12s; position:relative;}
+  .lorcard:hover{border-color:#3B6FE0; box-shadow:0 6px 18px rgba(29,78,216,.14);}
+  .lorcard.selected{border-color:#3B6FE0; box-shadow:0 0 0 1.5px #3B6FE0 inset;}
+  .lorcard .ph{background:linear-gradient(135deg,#3B6FE0,#7BA3EE); aspect-ratio:1/1; display:flex; align-items:center; justify-content:center; color:#fff; font-size:12px; font-weight:600;}
+  .lorcard .body{padding:7px 9px;}
+  .lorcard .n{font-size:12px; font-weight:600; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
+  .lorcard .d{font-size:10px; color:var(--sub); margin-top:2px; display:flex; gap:8px;}
+  .lorcard .chk-tag{position:absolute; top:6px; right:6px; width:18px; height:18px; border-radius:50%; background:#3B6FE0; color:#fff; font-size:11px; display:none; align-items:center; justify-content:center;}
+  .lorcard.selected .chk-tag{display:flex;}
+
+  /* ===== 顶部搜索下拉 ===== */
+  .top-seldd{position:relative;}
+  .top-seldd>button{font-size:13px; color:var(--text); display:flex; align-items:center; gap:2px; padding:5px 11px; border-radius:7px; background:#EDF3FB; border:1px solid #DBE7F7; color:#2E5FB0;}
+  .top-seldd>button:hover{background:#E0EAF8;}
+  .top-seldd .dd{position:absolute; left:0; top:calc(100% + 4px); background:#fff; border:1px solid var(--line); border-radius:10px; box-shadow:0 8px 24px rgba(20,30,60,.12); min-width:128px; padding:5px; z-index:70; display:none;}
+  .top-seldd .dd.open{display:block;}
+  .top-search{display:flex; align-items:center; gap:4px; border:1px solid var(--line); border-radius:8px; background:#F8FAFD; padding:0 4px 0 10px; height:32px;}
+  .top-search input{flex:1; font-size:12px; min-width:120px;}
+  .top-search .search-go{width:26px; height:26px; border-radius:7px; display:flex; align-items:center; justify-content:center; color:var(--sub); background:#EDF1F7;}
+  .top-search .search-go:hover{color:var(--blue); background:#E2EAF7;}
+  .top-search .search-go svg{pointer-events:none;}
+
+  /* ===== 训练管理：记录瀑布流 ===== */
+  .transgrid{display:grid; grid-template-columns:repeat(auto-fill,minmax(190px,1fr)); gap:14px;}
+  .transcard{background:#fff; border:1px solid var(--line); border-radius:12px; overflow:hidden; cursor:pointer; transition:all .12s;}
+  .transcard:hover{border-color:#C7D6F5; box-shadow:0 6px 18px rgba(29,78,216,.1);}
+  .transcard .tph{aspect-ratio:1/1; display:flex; align-items:center; justify-content:center; color:#fff; font-size:12px; font-weight:600; position:relative;}
+  .transcard .tph .tag-ok{position:absolute; left:8px; top:8px; font-size:9px; background:rgba(0,0,0,.45); padding:2px 7px; border-radius:999px; color:#fff;}
+  .transcard .tbody{padding:9px 11px;}
+  .transcard .tn{font-size:12px; font-weight:600; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
+  .transcard .tt{font-size:10px; color:var(--sub); margin-top:3px; display:flex; justify-content:space-between;}
+
+  /* ===== 训练记录详情 ===== */
+  .detailtop{display:flex; align-items:center; gap:14px; margin-bottom:16px;}
+  .donebar{margin-bottom:16px;}
+  .done{display:flex; align-items:center; gap:12px; font-size:12px;}
+  .done .bar{flex:1; max-width:420px; height:8px; background:#E8EDF5; border-radius:99px; overflow:hidden;}
+  .done .bar i{display:block; height:100%; background:linear-gradient(90deg,#3B6FE0,#6FA3F0); border-radius:99px;}
+  .done b{color:var(--blue); font-weight:700; white-space:nowrap;}
+  .tradetail{display:grid; grid-template-columns:1.2fr 1fr; gap:16px; align-items:start; max-width:1080px; margin:0 auto;}
+  #detailSamples{display:grid; grid-template-columns:repeat(3,1fr); gap:8px;}
+  #detailSamples .tcard .tph{aspect-ratio:1/1;}
+  #detailSamples .tcard .tn{font-size:10px;}
+  #detailSamples .tcard .ts{font-size:8px;}
+  .tradetail .left{background:#fff; border:1px solid var(--line); border-radius:12px; padding:14px;}
+  .tradetail .right{background:#fff; border:1px solid var(--line); border-radius:12px; padding:14px;}
+  .selrow{display:flex; align-items:center; gap:14px; margin-top:12px; font-size:12px; color:var(--sub);}
+  .selrow label{display:flex; align-items:center; gap:5px; color:var(--text); cursor:pointer;}
+  .selrow .tb-btn{margin-left:auto;}
+  .tabs2{display:flex; gap:2px; background:#F2F5FA; border-radius:8px; padding:3px; margin-bottom:12px;}
+  .tabs2 button{flex:1; font-size:12px; padding:6px; border-radius:6px; color:var(--sub);}
+  .tabs2 button.active{background:#fff; color:var(--blue); font-weight:600; box-shadow:0 1px 4px rgba(20,30,60,.08);}
+  .paramcard{border:1px solid var(--line); border-radius:10px; overflow:hidden;}
+  .prow{display:flex; justify-content:space-between; font-size:12px; padding:8px 12px; border-bottom:1px solid var(--line);}
+  .prow:last-child{border-bottom:none;}
+  .prow span{color:var(--sub);}
+  .prow b{font-weight:600;}
+  .actrow{display:flex; gap:10px; margin-top:14px;}
+  .actrow .tb-btn{flex:1; justify-content:center;}
+  .tb-btn{display:inline-flex; align-items:center; gap:4px;}
+
+  /* ===== 训练样图小卡 + 日志曲线 ===== */
+  .tcard{background:#fff; border:1px solid var(--line); border-radius:9px; overflow:hidden;}
+  .tcard .tph{aspect-ratio:1/1; display:flex; align-items:center; justify-content:center; color:#fff; font-size:11px; font-weight:600;}
+  .tcard .tbody{padding:6px 8px;}
+  .tcard .tn{font-size:11px; font-weight:600;}
+  .tcard .ts{font-size:9px; color:var(--sub); margin-top:2px;}
+  .curvebox{background:#FBFCFE; border:1px solid var(--line); border-radius:10px; padding:10px;}
+  .curvetitle{font-size:12px; font-weight:700; margin-bottom:4px; color:var(--text);}
+  .tradetail .right .actrow{margin-top:12px;}
+
+  /* ===== 模型详情 ===== */
+  .mdetail{display:grid; grid-template-columns:1fr 1.05fr; gap:16px; align-items:start; max-width:1080px; margin:0 auto;}
+  .mdetail .left{display:grid; grid-template-columns:1fr 1fr; gap:10px;}
+  .mdetail .right{background:#fff; border:1px solid var(--line); border-radius:12px; padding:16px;}
+  .mdimg{aspect-ratio:4/3; border-radius:12px; display:flex; align-items:center; justify-content:center; color:#fff; font-size:13px; font-weight:600; position:relative; border:1px solid var(--line); min-width:0;}
+  .mdhead h2{font-size:17px; font-weight:700; margin-bottom:6px;}
+  .mdmeta{font-size:11px; color:var(--sub); display:flex; gap:12px; flex-wrap:wrap;}
+  .mdcreator{display:flex; align-items:center; gap:8px; font-size:12px; margin:12px 0;}
+  .mdcreator .ava{width:26px;height:26px;border-radius:50%;background:#3B6FE0;color:#fff;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;}
+  .mdbtns{display:flex; gap:8px; margin-bottom:8px;}
+  .mdbtns .tb-btn{flex:1; justify-content:center;}
+  .mdsect{border-top:1px solid var(--line); margin-top:12px; padding-top:12px;}
+  .mdsect>b{font-size:13px; font-weight:700;}
+  .mdtable{width:100%; border-collapse:collapse; margin-top:8px; font-size:12px;}
+  .mdtable td{padding:7px 4px; border-bottom:1px dashed var(--line);}
+  .mdtable td:first-child{color:var(--sub); width:38%;}
+  .mdtable td:last-child{font-weight:500;}
+  .mdintro{font-size:12px; color:var(--sub); line-height:1.8; margin-top:8px;}
+  .mdcmt{background:#fff; border:1px solid var(--line); border-radius:12px; padding:14px 16px; margin-top:14px;}
+
+  /* ===== 图片详情 ===== */
+  .idetail{display:grid; grid-template-columns:1.15fr 1fr; gap:16px; max-width:1080px; margin:0 auto;}
+  .idetail .right{background:#fff; border:1px solid var(--line); border-radius:12px; padding:16px;}
+  .idimg{aspect-ratio:1/1; border-radius:12px; display:flex; align-items:center; justify-content:center; color:#fff; font-size:15px; font-weight:600; position:relative; border:1px solid var(--line);}
+  .idacts{display:flex; gap:16px; font-size:12px; color:var(--sub); margin-top:10px;}
+  .genpanel{border:1px solid var(--line); border-radius:10px; padding:12px;}
+  .gphead{display:flex; align-items:center; justify-content:space-between; margin-bottom:8px;}
+  .gphead span{display:flex; gap:6px;}
+  .gphead .tb-btn{font-size:11px; padding:4px 10px;}
+  .gprow{font-size:11px; color:var(--sub); margin:8px 0 4px; font-weight:600;}
+  .gpbox{background:#F8FAFD; border:1px solid var(--line); border-radius:8px; padding:8px 10px; font-size:11px; color:var(--text); line-height:1.7;}
+  .gpparams{font-size:11px; color:var(--text);}
+  .gpparams .grow2{display:flex; gap:10px; margin-top:5px;}
+  .gpparams .grow2 span{color:var(--sub);}
+  .idcomment{display:flex; gap:8px; margin-top:8px;}
+  .idcomment input{flex:1; border:1px solid var(--line); border-radius:8px; padding:7px 11px; font-size:12px; background:#F8FAFD;}
+
+  /* ===== 发布页 ===== */
+  .pubbox{max-width:880px; background:#fff; border:1px solid var(--line); border-radius:12px; padding:30px 34px; margin:18px auto;}
+  .pubdrop{border:1.5px dashed #A9BBDA; border-radius:10px; padding:56px 20px; text-align:center; font-size:14px; font-weight:600; color:var(--text); background:#FBFCFE;}
+  .pubdrop-in span{display:block; font-size:11px; color:var(--sub); font-weight:400; margin-top:4px;}
+  .pubnote{font-size:11px; color:var(--sub); text-align:center; margin:12px 0 6px;}
+  .pubrow{display:flex; align-items:center; gap:12px; margin:16px 0;}
+  .pubrow label{width:110px; font-size:12px; font-weight:600; color:var(--text); flex-shrink:0;}
+  .pubrow input[type=text],.pubrow input:not([type]):not([type=radio]):not([type=checkbox]){flex:1; border:1px solid var(--line); border-radius:8px; padding:10px 14px; font-size:13px; background:#F8FAFD; max-width:560px;}
+  .pubrow>input{flex:1; border:1px solid var(--line); border-radius:8px; padding:10px 14px; font-size:13px; background:#F8FAFD; max-width:560px;}
+  .pubrow .cnt{font-size:11px; color:var(--sub);}
+  .pubta{flex:1; border:1px solid var(--line); border-radius:8px; padding:10px 14px; font-size:13px; background:#F8FAFD; min-height:84px; resize:vertical; max-width:560px;}
+  .chk{display:inline-flex; align-items:center; gap:5px; font-size:12px; color:var(--text); margin-right:14px;}
+  .lic{display:flex; flex-wrap:wrap; gap:4px; margin:4px 0;}
+  .pubsteps{display:flex; gap:18px; font-size:12px; color:var(--sub); margin-bottom:16px; border-bottom:1px solid var(--line); padding-bottom:10px;}
+  .pubsteps .on{color:#2E5FB0; font-weight:700;}
+  .pubfoot{display:flex; justify-content:flex-end; margin-top:14px;}
+  .pubfoot .tb-btn{padding:8px 34px;}
+  .pubdecl{font-size:11px; color:var(--sub); line-height:1.9; border-top:1px dashed var(--line); margin-top:16px; padding-top:12px;}
+
+  /* ===== 我的 / 收藏 ===== */
+  .minehead{display:flex; align-items:center; gap:14px; margin-top:14px;}
+  .minehead .mname{font-size:17px; font-weight:700;}
+  .minehead .msub{font-size:11px; color:var(--sub); margin-top:3px;}
+  .minehead .tb-btn{margin-left:auto;}
+  .minetabs{display:flex; gap:4px; border-bottom:1.5px solid var(--line); margin-top:14px;}
+  .minetabs button{font-size:13px; font-weight:600; color:var(--sub); padding:9px 14px; background:none; border:none; border-bottom:2px solid transparent; margin-bottom:-1.5px;}
+  .minetabs button.active{color:#2E5FB0; border-bottom-color:#2E5FB0;}
+  .minewrap{display:grid; grid-template-columns:150px 1fr; gap:18px; margin-top:14px;}
+  .mineside{border-right:1px solid var(--line); padding-right:10px;}
+  .mside-title{font-size:12px; font-weight:700; margin-bottom:8px;}
+  .mside-item{font-size:12px; color:var(--sub); padding:7px 10px; border-radius:7px; cursor:pointer; display:flex; justify-content:space-between;}
+  .mside-item:hover{background:#F2F6FC;}
+  .mside-item.active{background:#EDF3FB; color:#2E5FB0; font-weight:600;}
+  .mside-item b{font-weight:600;}
+  .mfilter{display:flex; flex-wrap:wrap; gap:8px; margin:12px 0 16px;}
+  .mfilter button{border:1px solid var(--line); background:#fff; border-radius:999px; padding:5px 15px; font-size:12px; color:var(--sub); cursor:pointer; transition:all .15s;}
+  .mfilter button:hover{border-color:#9AA6F0; color:#5B6CF0;}
+  .mfilter button.on{background:linear-gradient(135deg,#5B6CF0,#8B5CF6); color:#fff; border-color:transparent; font-weight:600;}
+
+  /* ===== 设置 ===== */
+  .setava{display:flex; align-items:center; gap:12px;}
+
+  /* ===== 弹窗 ===== */
+  .modal{position:fixed; inset:0; background:rgba(20,28,40,.45); display:none; align-items:center; justify-content:center; z-index:200;}
+  .modal.open{display:flex;}
+  .mcard-modal{background:#fff; border-radius:14px; padding:22px 24px; width:360px; box-shadow:0 12px 40px rgba(20,28,40,.18);}
+  .mcard-modal h3{font-size:16px; font-weight:700; margin-bottom:8px;}
+  .mcard-modal p{font-size:12px; color:var(--sub); line-height:1.7; margin-bottom:14px;}
+  .mbtns{display:flex; gap:10px; justify-content:flex-end;}
+  .lmhead{display:flex; justify-content:space-between; align-items:center;}
+  .lmhead h3{margin-bottom:0;}
+  .lmhead button{background:none; border:none; font-size:20px; color:var(--sub); cursor:pointer;}
+  .tb-btn.orange{background:#F08A2C; color:#fff;}
+  .tb-btn.orange:hover{background:#DD7A1C;}
+
+  /* ===== 训练三步向导 ===== */
+  .tbtn.soft{background:#E4EEFC; color:#4A7DBF; border:1px solid #C9DEF8; border-radius:6px; padding:8px 26px; font-size:13px;}
+  .tbtn.soft:hover{background:#D6E6FA;}
+  .tset2-top{display:flex; gap:24px; flex-wrap:wrap; align-items:flex-start; margin-bottom:16px;}
+  .tset2-left{flex:1 1 260px; min-width:220px;}
+  .tset2-right{flex:1 1 300px; min-width:240px;}
+  .tt{font-size:13px; font-weight:700; margin-bottom:8px;}
+  .basebox{border:1px dashed var(--line); border-radius:8px; padding:22px 16px; text-align:center; color:var(--sub); font-size:13px; cursor:pointer; background:#FAFBFC; min-height:96px; display:flex; align-items:center; justify-content:center;}
+  .basebox:hover{border-color:var(--blue);}
+  .basebox .bm-empty{color:#9AA4B2;}
+  .basebox .bm-pick{display:flex; align-items:center; gap:10px; text-align:left;}
+  .basebox .bm-pick .sw{width:52px; height:52px; border-radius:8px; flex:none;}
+  .basebox .bm-pick .bn{font-size:13px; font-weight:600; color:#1A1B1C;}
+  .basebox .bm-pick .bt{font-size:11px; color:var(--sub); margin-top:2px;}
+  .tin{width:100%; font-size:12px; border:1px solid var(--line); border-radius:6px; padding:6px 9px;}
+  .resetlink{font-size:12px; color:var(--blue); cursor:pointer; white-space:nowrap;}
+  .tparam{border-top:1px solid var(--line); padding-top:12px;}
+  .tpgrid{display:grid; grid-template-columns:repeat(3,1fr); gap:10px;}
+  .tpgrid label{font-size:11px; color:var(--sub); display:block; margin-bottom:3px;}
+  .tpgrid input,.tpgrid select{width:100%; font-size:12px; border:1px solid var(--line); border-radius:6px; padding:5px 8px; background:#fff;}
+  .tprogress{background:#fff; border:1px solid var(--line); border-radius:12px; padding:16px; margin-bottom:14px;}
+  .tp-title{font-size:15px; font-weight:700; margin-bottom:10px;}
+  .tp-bar{height:10px; background:#EEF1F5; border-radius:6px; overflow:hidden;}
+  .tp-fill{height:100%; width:0%; background:var(--blue); border-radius:6px; transition:width .5s;}
+  .tp-num{font-size:12px; color:var(--sub); margin-top:8px;}
+  .tp-left-title{font-size:13px; font-weight:700; margin-bottom:8px;}
+  .toptabs{display:flex; gap:4px; border-bottom:1px solid var(--line); margin-bottom:10px;}
+  .toptabs span{font-size:12px; padding:6px 12px; color:var(--sub); cursor:pointer; border-bottom:2px solid transparent; margin-bottom:-1px;}
+  .toptabs span.on{color:var(--blue); border-color:var(--blue); font-weight:600;}
+  .tp-check{display:flex; align-items:center; gap:12px; font-size:12px; color:var(--sub); margin-bottom:10px;}
+  .tp-check .tbtn{font-size:11px; border:1px solid var(--line); border-radius:5px; padding:3px 10px; background:#fff; color:var(--sub);}
+  .tpsamples{display:grid; grid-template-columns:repeat(3,1fr); gap:8px; min-height:120px;}
+  .tpsample{position:relative; border-radius:8px; overflow:hidden; font-size:11px; color:var(--sub);}
+  .tpsample .sw{aspect-ratio:4/3; border-radius:8px;}
+  .tpsample .nm{display:flex; justify-content:space-between; align-items:center; margin-top:4px;}
+  .tpsample .dl{font-size:11px; color:var(--blue); border:1px solid var(--blue); border-radius:4px; padding:1px 6px; cursor:pointer;}
+  .tpsample .chk{position:absolute; top:6px; left:6px;}
+  .live-box{min-height:150px; display:flex; align-items:center; justify-content:center; color:var(--sub); font-size:12px;}
+  .live-box img{max-width:100%; border-radius:8px;}
+  .trbtns{display:flex; flex-direction:column; gap:12px; margin-top:14px;}
+  .trbtns button{width:100%; padding:9px; font-size:13px;}
+  .tbtn.orange{background:#F08A2C; color:#fff; border:none; border-radius:6px; padding:8px; font-size:13px;}
+  .tbtn.orange-line{background:#fff; color:#F08A2C; border:1px solid #F5B987; border-radius:6px; padding:8px; font-size:13px;}
+  .tbtn.red-line{background:#fff; color:#E0514E; border:1px solid #F2B4B2; border-radius:6px; padding:8px; font-size:13px;}
+
+  /* ===== 选择模型弹窗 ===== */
+  .sm-bar{display:flex; gap:8px; align-items:center; flex-wrap:wrap; margin:14px 0 10px;}
+  .sm-sp{font-size:12px; color:var(--sub); cursor:pointer;}
+  .sm-sp b{color:#1A1B1C;}
+  .sm-search{font-size:12px; border:1px solid var(--line); border-radius:6px; padding:5px 10px; width:130px;}
+  .sm-tabs{display:flex; gap:4px; border-bottom:1px solid var(--line); margin-bottom:12px;}
+  .sm-tabs button{font-size:12px; padding:6px 14px; color:var(--sub); border:none; background:none; cursor:pointer; border-bottom:2px solid transparent; margin-bottom:-1px;}
+  .sm-tabs button.active{color:var(--blue); border-color:var(--blue); font-weight:600;}
+  .sm-grid{display:grid; grid-template-columns:repeat(4,1fr); gap:12px; max-height:460px; overflow:auto;}
+  .sm-card{border:1px solid var(--line); border-radius:10px; overflow:hidden; background:#fff;}
+  .sm-card .sw{aspect-ratio:4/3; position:relative;}
+  .sm-card .smt{position:absolute; top:6px; left:6px; font-size:10px; color:#fff; background:rgba(20,28,40,.6); border-radius:4px; padding:2px 6px;}
+  .sm-card .smv{position:absolute; top:6px; right:6px; font-size:10px; color:#fff; background:rgba(20,28,40,.55); border-radius:4px; padding:2px 6px;}
+  .sm-card .smn{font-size:12px; font-weight:600; padding:8px 8px 2px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+  .sm-card .smd{font-size:11px; color:var(--sub); padding:0 8px 6px;}
+  .sm-card .smops{display:flex; gap:6px; padding:0 8px 8px;}
+  .sm-card .smops .op{font-size:11px; color:var(--blue); border:1px solid var(--blue); border-radius:5px; padding:2px 8px; cursor:pointer; background:#fff;}
+  .sm-card .smops .op.orange{background:#F08A2C; border-color:#F08A2C; color:#fff;}
+  .sm-card .smops .op.gray{color:var(--sub); border-color:var(--line);}
+  .lmsub{font-size:12px; color:var(--sub); margin:6px 0 14px;}
+  .lminput{width:100%; box-sizing:border-box; border:1px solid var(--line); border-radius:9px; padding:10px 12px; font-size:13px; margin-bottom:10px; background:#F8FAFD;}
+  .lmchk{font-size:12px; color:var(--sub); display:flex; align-items:center; gap:5px; margin-bottom:12px;}
+  .lmbtn{width:100%; background:#F2783A; color:#fff; border:none; border-radius:9px; padding:11px; font-size:14px; font-weight:700; cursor:pointer;}
+  .lmalt{display:flex; gap:10px; margin-top:10px;}
+  .lmalt .tb-btn{flex:1; justify-content:center; background:#fff; border:1px solid var(--line);}
+  .lmreg{font-size:12px; color:var(--sub); text-align:center; margin-top:12px;}
+  .lmreg a{color:#F2783A; cursor:pointer;}
+
+  /* ===== 发送按钮置灰 ===== */
+  .sendbtn:disabled{background:#C9D6EE; cursor:not-allowed; box-shadow:none;}
+
+  @media (max-width:900px){
+    .chatwrap{flex-direction:column; height:auto; min-height:0;}
+    .conv{flex:none; flex-direction:row; overflow-x:auto; gap:6px;}
+    .conv .new{margin-bottom:0; flex-shrink:0;}
+    .conv .item{white-space:nowrap; flex-shrink:0;}
+    .chat{min-height:70vh;}
+    .gen2{grid-template-columns:1fr;}
+    .trainbody{grid-template-columns:1fr;}
+    .top-search{display:none;}
+    .core{gap:14px;}
+    .core .ent{width:150px;}
+  }
+</style>
+</head>
+<body>
+
+<!-- ===== 顶栏（原平台版式） ===== -->
+<header class="topbar">
+  <div class="logo" id="logoBtn" title="回到首页">
+    <span class="lic"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg></span>
+    <span>多模态工具</span>
+  </div>
+  <div class="top-mid">
+    <div class="top-seldd">
+      <button id="topSelBtn"><span id="topSelLabel">模型</span><span class="arr" style="font-size:15px;margin-left:6px;line-height:1;">▾</span></button>
+      <div class="dd" id="topSelDD">
+        <div class="mi" data-tsel="模型" data-view="model">模型</div>
+        <div class="mi" data-tsel="AI画廊" data-view="gallery">AI画廊</div>
+        <div class="mi" data-tsel="工作流" data-view="workflow">工作流</div>
+        <div class="mi" data-tsel="设计图库" data-view="library">设计图库</div>
+      </div>
+    </div>
+    <div class="top-search"><input id="topSearchInput" placeholder="搜索模型"><button class="search-go" id="topSearchGo"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.5" y2="16.5"/></svg></button></div>
+  </div>
+  <div class="top-right">
+    <button class="tb-btn" data-goto="trainlist">训练管理</button>
+    <button class="tb-btn info" id="pubBtn">上传<span class="arr" style="font-size:15px;margin-left:6px;line-height:1;">▾</span>
+      <div class="dd" id="pubDD">
+        <div class="mi" data-act="上传模型">上传模型</div>
+        <div class="mi" data-act="上传AI图片">上传AI图片</div>
+        <div class="mi" data-act="上传设计图片">上传设计图片</div>
+      </div>
+    </button>
+    <button class="tb-btn" data-goto="mine">我的发布</button>
+    <button class="tb-btn" data-goto="fav">我的收藏</button>
+    <div class="tb-user" id="userBtn"><span class="ava">I</span><span class="uid">普通用户</span><span class="arr">▾</span>
+      <div class="dd" id="userDD">
+        <div class="uhead"><span class="ava">I</span><div><div class="un">普通用户</div></div></div>
+        <div class="mi" data-act="账号设置">账号设置</div>
+        <div class="mi" data-act="退出登录">退出登录</div>
+      </div>
+    </div>
+  </div>
+</header>
+
+<!-- ===== 核心功能区（常驻，切页不隐藏） ===== -->
+<div class="core">
+  <div class="ent" data-view="chat">
+    <div class="ic"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3.5" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17.5" x2="12" y2="21"/><path d="M7 8.5h6.5M7 11.5h4"/><path d="M16.5 9.5l1.6 1.6 2.9-3"/></svg></div>
+    <h3>对话生图</h3><p>Chat Image</p>
+  </div>
+  <div class="ent" data-view="wfgen">
+    <div class="ic"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3.5" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17.5" x2="12" y2="21"/><circle cx="7" cy="9" r="1.4"/><circle cx="12" cy="13" r="1.4"/><circle cx="17" cy="8.5" r="1.4"/><line x1="8.2" y1="9.6" x2="10.8" y2="12.2"/><line x1="13.2" y1="12.6" x2="15.8" y2="9.2"/></svg></div>
+    <h3>在线工作流</h3><p>Stable Diffusion Com</p>
+  </div>
+  <div class="ent" data-view="train">
+    <div class="ic"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3.5" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17.5" x2="12" y2="21"/><rect x="6" y="6" width="3.6" height="3.6" rx="0.8"/><rect x="11" y="6" width="3.6" height="3.6" rx="0.8"/><rect x="6" y="11" width="3.6" height="3.6" rx="0.8"/><rect x="11" y="11" width="3.6" height="3.6" rx="0.8"/></svg></div>
+    <h3>Lora训练</h3><p>LoRA Models</p>
+  </div>
+</div>
+
+<div class="navrow">
+  <button class="active" data-view="home">首页</button>
+  <button data-view="model">模型</button>
+  <button data-view="gallery">AI画廊</button>
+  <button data-view="workflow">工作流</button>
+  <button data-view="library">设计图库</button>
+</div>
+
+<main>
+
+<!-- ===== 首页 ===== -->
+<section class="view active" id="view-home">
+  <div class="sec-head"><h2>精选模型</h2><span class="all" data-view="model">查看全部 &gt;</span></div>
+  <div class="grid5" id="homeModels"></div>
+
+  <div class="sec-head"><h2>精选图片</h2><span class="all" data-view="gallery">查看全部 &gt;</span></div>
+  <div class="grid4" id="homeImgs"></div>
+
+  <div class="sec-head"><h2>精选图库</h2><span class="all" data-view="library">查看全部 &gt;</span></div>
+  <div class="grid4" id="homeLibs"></div>
+</section>
+
+<!-- ===== 对话生图 ===== -->
+<section class="view" id="view-chat">
+  <div class="chatwrap" id="chatWrap">
+    <aside class="conv">
+      <button class="new" id="newConv">+ 新对话</button>
+      <div id="convList"></div>
+    </aside>
+    <div class="chat">
+      <div class="chathead"><b id="convTitle">对话生图</b><span class="badge">Chat Image</span><button class="libbtn" id="genLibBtn">生图记录</button></div>
+      <div class="flow" id="flow"></div>
+      <div class="inputbox">
+        <div class="inrow">
+          <label class="uploadbtn" id="uploadBtn">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+            <span class="tip">支持一次上传4张参考图</span>
+            <input type="file" id="fileInput" accept="image/*" multiple style="display:none;">
+          </label>
+          <div class="infield">
+            <div class="inref" id="inRef" style="display:none;"></div>
+            <textarea id="promptInput" rows="1" placeholder="描述物流场景，或选下方场景模板，如：一辆正在装货的集装箱卡车，傍晚"></textarea>
+            <button class="translatebtn" id="translateBtn" title="翻译成中文/英文"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M2 5h9M6.5 3v2M4 5c0 4 3 7 7 8M11 5c-1 4-3 6-6 7"/><path d="M13 19l4-9 4 9M14.5 16.5h5"/></svg></button>
+          </div>
+          <button class="sendbtn" id="sendBtn">发送</button>
+        </div>
+        <div class="settings">
+          <div class="sel" id="selModel"><button><span class="l">模型</span><span id="modelVal">Qwen-Image</span><span class="arr">▾</span></button><div class="menu" id="menuModel"></div></div>
+          <div class="sel" id="selScene"><button><span class="l">场景</span><span id="sceneVal">未选择</span><span class="arr">▾</span></button><div class="menu" id="menuScene"></div></div>
+          <div class="sel" id="selSize"><button><span class="l">尺寸</span><span id="sizeVal">1:1</span><span class="arr">▾</span></button><div class="menu" id="menuSize"></div></div>
+          <div class="sel" id="selCount"><button><span class="l">数量</span><span id="countVal">2张</span><span class="arr">▾</span></button><div class="menu" id="menuCount"></div></div>
+          <div class="sel" id="selLora"><button><span class="l">LoRA风格</span><span id="loraVal">未选择</span><span class="arr">▾</span></button></div>
+        </div>
+        <div class="advsec" id="advSec">
+          <div class="advhd" id="advToggle">高级参数设置<span class="hint">采样器 / 步数 / CFG / 种子 · 批次与每批数量</span><span class="arr">▾</span><button class="advclose" id="advClose" type="button">收起</button></div>
+          <div class="advbd" id="advBody">
+            <div class="advgroup">
+              <div class="advgt">生成参数（文生图 / 图生图）</div>
+              <div class="advgrid">
+                <div class="f"><label>采样器(Sampler)</label><select id="advSampler"><option>DPM++ 2M</option><option>Euler a</option><option>Euler</option><option>DDIM</option></select></div>
+                <div class="f"><label>噪声调度器类型</label><select id="advSched"><option>normal</option></select></div>
+                <div class="f"><label>采样迭代步数(Steps)</label><input id="advSteps" value="25" type="text"></div>
+                <div class="f"><label>生成批次(Batch)</label><div class="sliderrow"><input type="range" id="advBatch" min="1" max="5" value="1"><span id="advBatchV">1</span></div></div>
+                <div class="f"><label>每批数量(Per)</label><div class="sliderrow"><input type="range" id="advPer" min="1" max="5" value="2"><span id="advPerV">2</span></div></div>
+                <div class="f"><label>提示词相关性(CFG Scale)</label><input id="advCfg" value="7" type="text"></div>
+                <div class="f"><label>随机种子(seed)</label><input id="advSeed" value="-1" type="text"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="foot">AI生成内容可能有误，请注意核实 · 本原型仅模拟交互，不真实调用生成能力</div>
+      </div>
+    </div>
+    <aside class="genlibdrawer" id="genLibDrawer">
+      <div class="dhead">生图记录<button class="dclose" id="genLibClose" title="收起生图记录">×</button></div>
+      <div class="dbody" id="genLibBody"></div>
+    </aside>
+  </div>
+</section>
+
+<!-- ===== 在线生图 ===== -->
+<section class="view" id="view-generate">
+  <div class="page-title">在线生图</div>
+  <div class="page-sub">Stable Diffusion Web · 文生图 / 图生图 / 超清放大 / 个人AI图库</div>
+  <div class="gen2">
+    <div class="gform">
+      <div class="gtabs">
+        <button class="active" data-gtab="t2t">文生图</button>
+        <button data-gtab="i2i">图生图</button>
+        <button data-gtab="ups">超清放大</button>
+        <button data-gtab="lib">个人AI图库</button>
+      </div>
+      <div class="grow">
+        <span>Stable Diffusion 模型(ckpt)</span>
+        <select><option>Qwen-Image</option><option>Flux.2 klein</option><option>SDXL 1.0</option><option>Flux.1 schnell</option></select>
+        <span>VAE模型 替换</span><select><option>Automatic</option></select>
+      </div>
+      <div class="gpanel active" id="gp-t2t">
+        <div class="promptbox">
+          <div class="pptag">正向提示词</div>
+          <textarea placeholder="请输入提示词"></textarea>
+          <div class="tools"><button class="tbtn">AI扩写</button><span>翻译</span><span style="margin-left:auto;">0 提示词</span></div>
+          <div class="ptip2">
+            <div class="ptip2-hd" data-box="pos">快捷提示词 · 正向<span class="ptip2-arr">▾</span></div>
+            <div class="ptip2-words" data-box="pos">
+              <button data-ptip="modern warehouse, logistics center">现代物流仓库<br>modern warehouse</button>
+              <button data-ptip="automated sorting line">自动化分拣线<br>automated sorting line</button>
+              <button data-ptip="container yard">集装箱堆场<br>container yard</button>
+              <button data-ptip="seaport panorama, dock">港口码头全景<br>seaport panorama</button>
+              <button data-ptip="truck fleet, freight">货运卡车车队<br>truck fleet</button>
+              <button data-ptip="cold storage, refrigerated">冷链冷库<br>cold storage</button>
+              <button data-ptip="high-rise rack warehouse">高位货架仓库<br>high-rise rack warehouse</button>
+              <button data-ptip="forklift operation">叉车作业<br>forklift operation</button>
+              <button data-ptip="drone delivery">无人机配送<br>drone delivery</button>
+              <button data-ptip="quality inspection bench">质检工作台<br>quality inspection</button>
+              <button data-ptip="aerial view, logistics park">物流园区鸟瞰<br>aerial view</button>
+              <button data-ptip="photorealistic lighting">写实光影<br>photorealistic</button>
+            </div>
+          </div>
+        </div>
+        <div class="promptbox">
+          <div class="pptag">负向提示词</div>
+          <textarea style="min-height:48px;">(nsfw:2),ng_deepnegative_v1_75t,(low quality:1.4),badhandv4,EasyNegative,(worst quality:1.6),sexy,(naked:2),ugly,deformed,noisy,blurry,distorted,out_of_focus</textarea>
+          <div class="tools"><button class="tbtn">AI扩写</button><span>翻译</span><span style="margin-left:auto;">0 提示词</span></div>
+          <div class="ptip2">
+            <div class="ptip2-hd" data-box="neg">快捷提示词 · 负向<span class="ptip2-arr">▾</span></div>
+            <div class="ptip2-words" data-box="neg">
+              <button data-ptip="blurry, low quality">模糊低质<br>blurry, low quality</button>
+              <button data-ptip="deformed, distorted">变形扭曲<br>deformed</button>
+              <button data-ptip="text artifacts, watermark">文字乱码/水印<br>text artifacts</button>
+              <button data-ptip="non-logistics scene">非物流场景<br>non-logistics scene</button>
+              <button data-ptip="overexposed">过曝<br>overexposed</button>
+              <button data-ptip="color distortion">色彩失真<br>color distortion</button>
+              <button data-ptip="cluttered background">背景杂乱<br>cluttered background</button>
+              <button data-ptip="damaged vehicles">破损车辆<br>damaged vehicles</button>
+            </div>
+          </div>
+        </div>
+        <div class="paramsec">
+          <div class="pt">生成参数</div>
+          <div class="grid2">
+            <div><label>采样器(Sampler)</label><select><option>DPM++ 2M</option><option>Euler a</option><option>Euler</option><option>DDIM</option></select></div>
+            <div><label>噪声调度器类型</label><select><option>normal</option></select></div>
+            <div><label>采样迭代步数(Steps)</label><input value="25"></div>
+            <div><label>宽度 × 高度</label><input value="1024 × 1024"></div>
+            <div><label>生成批次 / 每批数量</label><input value="1 / 1"></div>
+            <div><label>提示词相关性(CFG Scale)</label><input value="7"></div>
+            <div><label>随机种子(seed)</label><input value="-1"></div>
+          </div>
+        </div>
+      </div>
+      <div class="gpanel" id="gp-i2i">
+        <div class="imode"><button class="active">图生图</button><button>图生图(涂鸦重绘)</button><button>局部重绘</button><button>局部重绘(上传蒙版)</button></div>
+        <div class="upbox" style="min-height:88px;">点击或拖入图片<br><span class="upnote">支持 jpg / png / webp，单张不超过30M</span></div>
+        <div class="promptbox">
+          <div class="pptag">正向提示词</div>
+          <textarea placeholder="请输入提示词"></textarea>
+          <div class="tools"><button class="tbtn">AI扩写</button><span>翻译</span><span style="margin-left:auto;">0 提示词</span></div>
+          <div class="ptip2">
+            <div class="ptip2-hd" data-box="pos">快捷提示词 · 正向<span class="ptip2-arr">▾</span></div>
+            <div class="ptip2-words" data-box="pos">
+              <button data-ptip="modern warehouse, logistics center">现代物流仓库<br>modern warehouse</button>
+              <button data-ptip="automated sorting line">自动化分拣线<br>automated sorting line</button>
+              <button data-ptip="container yard">集装箱堆场<br>container yard</button>
+              <button data-ptip="seaport panorama, dock">港口码头全景<br>seaport panorama</button>
+              <button data-ptip="truck fleet, freight">货运卡车车队<br>truck fleet</button>
+              <button data-ptip="cold storage, refrigerated">冷链冷库<br>cold storage</button>
+              <button data-ptip="high-rise rack warehouse">高位货架仓库<br>high-rise rack warehouse</button>
+              <button data-ptip="forklift operation">叉车作业<br>forklift operation</button>
+              <button data-ptip="drone delivery">无人机配送<br>drone delivery</button>
+              <button data-ptip="quality inspection bench">质检工作台<br>quality inspection</button>
+              <button data-ptip="aerial view, logistics park">物流园区鸟瞰<br>aerial view</button>
+              <button data-ptip="photorealistic lighting">写实光影<br>photorealistic</button>
+            </div>
+          </div>
+        </div>
+        <div class="promptbox">
+          <div class="pptag">负向提示词</div>
+          <textarea style="min-height:48px;">(nsfw:2),ng_deepnegative_v1_75t,(low quality:1.4),badhandv4,EasyNegative,(worst quality:1.6),sexy,(naked:2),ugly,deformed,noisy,blurry,distorted,out_of_focus</textarea>
+          <div class="tools"><button class="tbtn">AI扩写</button><span>翻译</span><span style="margin-left:auto;">0 提示词</span></div>
+          <div class="ptip2">
+            <div class="ptip2-hd" data-box="neg">快捷提示词 · 负向<span class="ptip2-arr">▾</span></div>
+            <div class="ptip2-words" data-box="neg">
+              <button data-ptip="blurry, low quality">模糊低质<br>blurry, low quality</button>
+              <button data-ptip="deformed, distorted">变形扭曲<br>deformed</button>
+              <button data-ptip="text artifacts, watermark">文字乱码/水印<br>text artifacts</button>
+              <button data-ptip="non-logistics scene">非物流场景<br>non-logistics scene</button>
+              <button data-ptip="overexposed">过曝<br>overexposed</button>
+              <button data-ptip="color distortion">色彩失真<br>color distortion</button>
+              <button data-ptip="cluttered background">背景杂乱<br>cluttered background</button>
+              <button data-ptip="damaged vehicles">破损车辆<br>damaged vehicles</button>
+            </div>
+          </div>
+        </div>
+        <div class="paramsec">
+          <div class="pt">生成参数</div>
+          <div class="grid2">
+            <div><label>缩放模式</label><select><option>拉伸原图</option><option>剪裁原图</option><option>填充空白</option></select></div>
+            <div><label>调整分辨率</label><select><option>按比例缩放</option></select></div>
+            <div><label>采样器(Sampler)</label><select><option>Euler a</option></select></div>
+            <div><label>噪声调度器类型</label><select><option>normal</option></select></div>
+            <div><label>采样迭代步数(Steps)</label><input value="20"></div>
+            <div><label>生成批次 / 每批数量</label><input value="1 / 1"></div>
+            <div><label>宽度</label><input value="512"></div>
+            <div><label>高度</label><input value="512"></div>
+            <div><label>提示词相关性(CFG Scale)</label><input value="7"></div>
+          </div>
+        </div>
+      </div>
+      <div class="gpanel" id="gp-ups">
+        <div class="upbox" style="min-height:110px;">点击或拖入图片<br><span class="upnote">支持 jpg / png / webp，单张不超过30M</span></div>
+        <div class="paramsec">
+          <div class="pt">生成参数</div>
+          <div class="grid2">
+            <div><label>方法</label><select><option>MultiDiffusion</option></select></div>
+            <div><label>重绘幅度(Denoising)</label><input value="0.75"></div>
+            <div><label>放大算法</label><select><option>R-ESRGAN 4x+</option><option>Lanczos</option><option>Nearest</option></select></div>
+            <div><label>调整分辨率</label><select><option>按比例缩放</option></select></div>
+            <div><label>宽度</label><input value="0"></div>
+            <div><label>高度</label><input value="0"></div>
+            <div><label>效果增强</label><select><option>全面增强Enhance</option></select></div>
+            <div><label>增强程度</label><input value="1"></div>
+          </div>
+        </div>
+      </div>
+      <div class="gpanel" id="gp-lib">
+        <div class="libbar"><button class="tbtn">刷新</button><button class="tbtn">上传到我的AI图片</button><button class="tbtn">上传到我的图库</button><button class="tbtn">批量管理</button></div>
+        <div class="gridm" id="genLibGrid"></div>
+      </div>
+    </div>
+    <div class="sidepanel">
+      <div class="genbtn" id="genRun">开始生图</div>
+      <div class="card prev"><div class="nodata" id="genPrev">无数据</div></div>
+      <div class="card"><h4>提示</h4><div style="font-size:11px;color:var(--sub);line-height:1.8;">支持中文提示词自动翻译为英文。<br>生成结果保存在个人AI图库，可检索复用。</div></div>
+    </div>
+  </div>
+</section>
+
+<!-- ===== 工作流模型广场（导航tab） ===== -->
+<section class="view" id="view-workflow">
+  <div class="page-title">工作流</div>
+  <div class="page-sub">工作流 · 官方内置物流行业ComfyUI工作流模型库，可加载运行、可视编辑</div>
+  <div class="fbar"><span class="lb">分类：</span><button class="fchip active">全部</button><button class="fchip">仓储仓库</button><button class="fchip">货运卡车</button><button class="fchip">集装箱</button><button class="fchip">港口码头</button><button class="fchip">冷链物流</button><button class="fchip">分拣配送</button><button class="fchip">质检场景</button><button class="fchip">物流设备</button></div>
+  <div class="gridm" id="wfGrid"></div>
+</section>
+
+<!-- ===== 在线工作流生图界面（核心功能） ===== -->
+<section class="view" id="view-wfgen">
+  <div class="wfcanvas">
+    <div class="wftool">
+      <div class="wficons">
+        <button class="wficon" title="新建工作流"><svg viewBox="0 0 16 16" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M8 3v10M3 8h10"/></svg></button>
+        <button class="wficon" title="保持当前工作流"><svg viewBox="0 0 16 16" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M3 2h8l2 2v10H3z"/><path d="M5.5 2v4h5V2"/><path d="M5.5 14v-5h5v5"/></svg></button>
+        <button class="wficon" title="下载当前工作流"><svg viewBox="0 0 16 16" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M8 3v8M4.5 7.5L8 11l3.5-3.5"/><path d="M3 13.5h10"/></svg></button>
+      </div>
+      <div class="wftr">
+        <button class="wfbtn primary" id="wfRun">开始生图</button>
+      </div>
+    </div>
+    <div class="wfbody">
+      <div class="wfstage" id="wfStage">
+        <svg class="wflinks" id="wfLinks" viewBox="0 0 1000 640" preserveAspectRatio="none"></svg>
+        <div class="wfnode" id="wfCp" style="left:30px;top:150px;">
+          <div class="wfnhead">Checkpoint加载器(简易)</div>
+          <div class="wfnbody">
+            <div class="wfnrow"><span class="port out"></span><span>MODEL</span></div>
+            <div class="wfnrow"><span class="port out"></span><span>CLIP</span></div>
+            <div class="wfnrow"><span class="port out"></span><span>VAE</span></div>
+            <div class="wfnrow"><label>Checkpoint名称</label><input class="cpinput" value="仓储仓库底模SDXL" readonly></div>
+          </div>
+        </div>
+        <div class="wfnode" id="wfClipP" style="left:270px;top:140px;">
+          <div class="wfnhead">CLIP文本编码</div>
+          <div class="wfnbody">
+            <div class="wfnrow"><span class="port in"></span><span>clip</span></div>
+            <div class="wfnrow"><span class="port out"></span><span>CONDITIONING</span></div>
+            <div class="wfnrow"><textarea rows="3">automated warehouse interior, shelves, forklift, bright light, photorealistic</textarea></div>
+          </div>
+        </div>
+        <div class="wfnode" id="wfClipN" style="left:270px;top:430px;">
+          <div class="wfnhead">CLIP文本编码</div>
+          <div class="wfnbody">
+            <div class="wfnrow"><span class="port in"></span><span>clip</span></div>
+            <div class="wfnrow"><span class="port out"></span><span>CONDITIONING</span></div>
+            <div class="wfnrow"><textarea rows="2">low quality, blurry, watermark</textarea></div>
+          </div>
+        </div>
+        <div class="wfnode" id="wfLat" style="left:30px;top:340px;">
+          <div class="wfnhead">空Latent图像</div>
+          <div class="wfnbody">
+            <div class="wfnrow"><span class="port out"></span><span>LATENT</span></div>
+            <div class="wfnrow"><label>宽度</label><input value="1024"></div>
+            <div class="wfnrow"><label>高度</label><input value="1024"></div>
+            <div class="wfnrow"><label>批量大小</label><input value="1"></div>
+          </div>
+        </div>
+        <div class="wfnode" id="wfKSam" style="left:540px;top:260px;">
+          <div class="wfnhead">K采样器</div>
+          <div class="wfnbody">
+            <div class="wfnrow"><span class="port in"></span><span>model</span></div>
+            <div class="wfnrow"><span class="port in"></span><span>positive</span></div>
+            <div class="wfnrow"><span class="port in"></span><span>negative</span></div>
+            <div class="wfnrow"><span class="port in"></span><span>Latent Image</span></div>
+            <div class="wfnrow"><span class="port out"></span><span>LATENT</span></div>
+            <div class="wfnrow"><label>种子</label><input value="772179413049179"></div>
+            <div class="wfnrow"><label>步数</label><input value="20"></div>
+            <div class="wfnrow"><label>CFG</label><input value="8.0"></div>
+            <div class="wfnrow"><label>采样器名称</label><input value="euler"></div>
+          </div>
+        </div>
+        <div class="wfnode" id="wfVae" style="left:790px;top:250px;">
+          <div class="wfnhead">VAE解码</div>
+          <div class="wfnbody">
+            <div class="wfnrow"><span class="port in"></span><span>samples</span></div>
+            <div class="wfnrow"><span class="port in"></span><span>vae</span></div>
+            <div class="wfnrow"><span class="port out"></span><span>IMAGE</span></div>
+          </div>
+        </div>
+        <div class="wfnode" id="wfSave" style="left:850px;top:440px;">
+          <div class="wfnhead">保存图像</div>
+          <div class="wfnbody">
+            <div class="wfnrow"><span class="port in"></span><span>images</span></div>
+            <div class="wfnrow"><label>文件名前缀</label><input value="ComfyUI"></div>
+            <div class="wfsave" id="wfSavePrev"><div class="wfsave-ph">暂无图像</div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===== 训练模型 ===== -->
+<section class="view" id="view-train">
+  <div class="page-title">Lora训练</div>
+  <div class="page-sub">LoRA Models · 物流行业专属模型训练（原生兼容 SD1.5 / SDXL / Flux 基底）</div>
+  <div class="steps"><span class="st active" id="ts1">1 数据准备</span><span class="ar">→</span><span class="st" id="ts2">2 设置参数</span><span class="ar">→</span><span class="st" id="ts3">3 开始训练</span></div>
+  <!-- 步骤1 数据准备 -->
+  <div class="trainbody" id="trainStep1">
+    <div class="card" style="background:#fff;border:1px solid var(--line);border-radius:12px;padding:16px;">
+      <div class="toolrow"><button id="autoTagBtn">批量自动打标</button><button id="editTagBtn">批量增删标签</button><button id="addImgBtn">添加图片</button><button id="clearImgBtn">清空</button></div>
+      <div class="dropzone" id="dropZone"><div class="big">点此上传图片</div><div>将图像（或数据集）拖到此处或单击以选择文件</div><div style="margin-top:6px;font-size:11px;">最多200个文件 · 接受png、jpeg、jpg、webp · 分辨率不低于100×100</div>
+        <input type="file" id="imgFile" multiple accept="image/png,image/jpeg,image/jpg,image/webp" style="display:none;">
+      </div>
+      <div class="thumbgrid" id="trainThumbs"></div>
+      <div style="font-size:12px;color:var(--sub);margin:10px 0;" id="trainUpCount">已上传：0张</div>
+      <div class="grow" style="margin-bottom:10px;">
+        <span>裁剪方式</span>
+        <select id="cropMode"><option>中央裁剪</option><option>聚焦裁剪</option></select>
+        <span>裁剪大小</span>
+        <select id="cropSize"><option>512×512</option><option>768×768</option><option>512×768</option><option>768×512</option><option>1024×1024</option></select>
+      </div>
+      <div class="toolrow"><button>开始裁剪</button><button class="genbtn" style="padding:8px 26px;" id="trainNext1">下一步</button></div>
+    </div>
+    <div class="sidepanel">
+      <div class="card"><h4>训练说明</h4><div style="font-size:11px;color:var(--sub);line-height:1.9;">上传物流场景图片集（集装箱、卡车、仓库、分拣等）<br>自动打标后训练LoRA<br>训练产物可在在线生图 / 对话生图中作为基底模型调用</div></div>
+    </div>
+  </div>
+  <!-- 步骤2 设置参数 -->
+  <div class="trainbody" id="trainStep2" style="display:none;">
+    <div class="card" style="background:#fff;border:1px solid var(--line);border-radius:12px;padding:16px;">
+      <div class="tset2-top">
+        <div class="tset2-left">
+          <div class="tt">用于训练的基础模型</div>
+          <div class="basebox" id="baseModelBox" title="点击选择模型"><div class="bm-empty">选择模型</div></div>
+        </div>
+        <div class="tset2-right">
+          <div class="tt">模型效果预览提示词</div>
+          <input placeholder="请输入" class="tin">
+          <div class="tt" style="margin-top:10px;">模型触发词</div>
+          <input placeholder="请输入触发词" class="tin">
+          <div style="font-size:11px;color:var(--sub);margin-top:8px;">训练中会根据提示词生成实时样图</div>
+        </div>
+        <div class="resetlink" id="trainReset">重置所有配置</div>
+      </div>
+      <div class="tparam">
+        <div class="pt">训练参数</div>
+        <div style="font-size:11px;color:var(--sub);margin-bottom:10px;">将鼠标悬停在每个设置上可查看更多信息。默认设置基于你选择的型号，更改这些设置可能会导致不良后果。</div>
+        <div class="tpgrid">
+          <div><label>单张训练次数 Num Repeats</label><input value="10"></div>
+          <div><label>训练轮数 Epochs</label><input value="10"></div>
+          <div><label>训练批量大小 Train Batch Size</label><input value="1"></div>
+          <div><label>步数 Steps</label><input value="100"></div>
+          <div><label>分辨率 Resolution</label><input value="512 × 512"></div>
+          <div><label>每2轮保存一个LoRA Save every N epochs</label><input value="2"></div>
+          <div><label>学习率预热 (%) Lr warm up</label><input value="0"></div>
+          <div><label>学习率调度器 LR Scheduler</label><select><option>cosine_with_restarts</option><option>cosine</option><option>constant</option></select></div>
+          <div><label>优化 Optimizer</label><select><option>Adamw8bit</option><option>AdamW</option><option>Prodigy</option></select></div>
+          <div><label>优化器参数 Optimizer Args</label><input placeholder="请输入"></div>
+          <div><label>学习率 Unet LR</label><input value="1.00E-04"></div>
+          <div><label>文本编码器学习率 Text Encoder LR</label><input value="1.00E-05"></div>
+          <div><label>调度器周期 LR Scheduler Cycles</label><input value="3"></div>
+          <div><label>仅训练 Unet Train unet only</label><select><option>开启</option><option>关闭</option></select></div>
+          <div><label>仅训练文本编码器 Train text encoder only</label><select><option>开启</option><option>关闭</option></select></div>
+          <div><label>最小信噪比伽马 Min SNR Gamma</label><input value="5"></div>
+          <div><label>网络大小 Network Dim</label><input value="32"></div>
+          <div><label>网络Alpha Network Alpha</label><input value="32"></div>
+          <div><label>保持n个token Keep n Tokens</label><input value="1"></div>
+          <div><label>最大token长度 Max token length</label><input value="75"></div>
+          <div><label>随机标注 Shuffle Caption</label><select><option>开启</option><option>关闭</option></select></div>
+          <div><label>噪声偏移 Noise Offset</label><input value="0.10"></div>
+          <div><label>clip跳过 Clip Skip</label><input value="2"></div>
+          <div><label>翻转增强 Flip Augmentation</label><select><option>开启</option><option>关闭</option></select></div>
+        </div>
+      </div>
+      <div class="toolrow" style="justify-content:flex-end;"><button id="trainBack1">上一步</button><button class="genbtn" style="padding:8px 26px;" id="trainStart">开始训练</button></div>
+    </div>
+  </div>
+  <!-- 步骤3 训练中 / 训练完成 -->
+  <div id="trainStep3" style="display:none;">
+    <div class="tprogress">
+      <div class="tp-title" id="tpTitle">训练中</div>
+      <div class="tp-bar"><div class="tp-fill" id="tpFill"></div></div>
+      <div class="tp-num" id="tpNum">训练中: 0 / 10</div>
+    </div>
+    <div class="trainbody">
+      <div class="card" style="background:#fff;border:1px solid var(--line);border-radius:12px;padding:16px;">
+        <div class="tp-left-title" id="tpLeftTitle">模型训练中...</div>
+        <div class="tpsamples" id="tpsamples"></div>
+        <div class="tp-check" style="margin-top:12px;margin-bottom:0;"><label><input type="checkbox" id="tpCheckAll"> 全选</label><span class="tp-sel" id="tpSel">已选中0</span><button class="tb-btn primary" id="tpDownload">下载</button></div>
+      </div>
+      <div class="sidepanel">
+        <div class="card" id="liveWrap">
+          <h4>实时样图</h4><div id="liveSample" class="live-box">训练中...请稍后</div>
+        </div>
+        <div class="card" id="doneWrap" style="display:none;">
+          <div class="tabs2"><button class="active" data-dtab="intro">模型介绍</button><button data-dtab="log">日志视图</button></div>
+          <div id="dtabIntro">
+            <div class="paramcard">
+              <div class="prow"><span>基底模型</span><b id="doneBase">—</b></div>
+              <div class="prow"><span>训练类型</span><b>LoRA</b></div>
+              <div class="prow"><span>迭代步数</span><b>1000</b></div>
+              <div class="prow"><span>学习率</span><b>1e-4</b></div>
+              <div class="prow"><span>批大小</span><b>4</b></div>
+              <div class="prow"><span>数据集图片</span><b id="doneCount">0 张</b></div>
+            </div>
+          </div>
+          <div id="dtabLog" style="display:none;">
+            <div class="curvebox">
+              <div class="curvetitle">Loss/Average</div>
+              <svg width="100%" height="132" viewBox="0 0 320 132" preserveAspectRatio="xMidYMid meet">
+                <defs><linearGradient id="lg2" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#6FA3F0" stop-opacity=".45"/><stop offset="1" stop-color="#6FA3F0" stop-opacity=".05"/></linearGradient></defs>
+                <polygon points="24,78 98,26 172,72 246,42 296,94 296,120 24,120" fill="url(#lg2)"/>
+                <polyline points="24,78 98,26 172,72 246,42 296,94" fill="none" stroke="#3B6FE0" stroke-width="2.4" stroke-linejoin="round"/>
+                <line x1="24" y1="120" x2="296" y2="120" stroke="#C4CFE0" stroke-width="1"/>
+                <text x="24" y="132" font-size="9" fill="#8A96A8">0</text>
+                <text x="92" y="132" font-size="9" fill="#8A96A8">1</text>
+                <text x="166" y="132" font-size="9" fill="#8A96A8">2</text>
+                <text x="240" y="132" font-size="9" fill="#8A96A8">3</text>
+                <text x="290" y="132" font-size="9" fill="#8A96A8">4</text>
+                <text x="12" y="18" font-size="9" fill="#8A96A8">loss</text>
+              </svg>
+            </div>
+          </div>
+        </div>
+        <div class="trbtns">
+          <button class="tbtn orange" id="trRetrain">重新训练</button>
+          <button class="tbtn orange-line" id="trNew">新的训练</button>
+          <button class="tbtn red-line" id="trCancel">取消训练</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===== 模型广场 ===== -->
+<section class="view" id="view-model">
+  <div class="page-title">模型</div>
+  <div class="page-sub">模型广场 · 官方内置物流行业模型库（基底模型 + 行业LoRA）</div>
+  <div class="fbar"><span class="lb">分类：</span><button class="fchip active">全部</button><button class="fchip">仓储仓库</button><button class="fchip">货运卡车</button><button class="fchip">集装箱</button><button class="fchip">港口码头</button><button class="fchip">冷链物流</button><button class="fchip">分拣配送</button><button class="fchip">质检场景</button><button class="fchip">物流设备</button></div>
+  <div class="gridm" id="modelGrid"></div>
+</section>
+
+<!-- ===== AI画廊 ===== -->
+<section class="view" id="view-gallery">
+  <div class="page-title">AI画廊</div>
+  <div class="page-sub">AI画廊 · 官方内置物流场景作品</div>
+  <div class="fbar"><span class="lb">分类：</span><button class="fchip active">全部</button><button class="fchip">仓储仓库</button><button class="fchip">货运卡车</button><button class="fchip">集装箱</button><button class="fchip">港口码头</button><button class="fchip">冷链物流</button><button class="fchip">分拣配送</button><button class="fchip">质检场景</button><button class="fchip">物流设备</button></div>
+  <div class="grid4" id="galleryGrid"></div>
+</section>
+
+<!-- ===== 设计图库 ===== -->
+<section class="view" id="view-library">
+  <div class="page-title">设计图库</div>
+  <div class="page-sub">设计图库 · 官方内置物流视觉素材</div>
+  <div class="fbar"><span class="lb">分类：</span><button class="fchip active">全部</button><button class="fchip">仓储仓库</button><button class="fchip">货运卡车</button><button class="fchip">集装箱</button><button class="fchip">港口码头</button><button class="fchip">冷链物流</button><button class="fchip">分拣配送</button><button class="fchip">质检场景</button><button class="fchip">物流设备</button></div>
+  <div class="grid4" id="libGrid"></div>
+</section>
+
+<!-- ===== 训练管理（训练记录清单） ===== -->
+<section class="view" id="view-trainlist">
+  <div class="page-title">训练管理</div>
+  <div class="page-sub">我的训练记录 · 共 <b id="transCount">0</b> 条</div>
+  <div class="transgrid" id="transGrid"></div>
+</section>
+
+<!-- ===== 训练记录详情 ===== -->
+<section class="view" id="view-traindetail">
+  <div class="detailtop">
+    <button class="tb-btn" id="backTrain">返回训练管理</button>
+    <div class="page-title" style="margin:0;flex:1;">训练记录详情</div>
+  </div>
+  <div class="donebar"><div class="done"><span>训练完成</span><div class="bar"><i style="width:100%;"></i></div><b>训练完成：10/10</b></div></div>
+  <div class="tradetail">
+    <div class="left">
+      <div class="grid3" id="detailSamples"></div>
+      <div class="selrow"><label><input type="checkbox" checked> 全选</label><span>已选中 5</span><button class="tb-btn primary" id="dlSamples">下载</button></div>
+    </div>
+    <div class="right">
+      <div class="tabs2"><button class="active" data-ttab="param">训练参数</button><button data-ttab="log">日志视图</button></div>
+      <div id="ttabParam">
+        <div class="paramcard">
+          <div class="prow"><span>基底模型</span><b>SDXL 1.0</b></div>
+          <div class="prow"><span>训练类型</span><b>LoRA</b></div>
+          <div class="prow"><span>迭代步数</span><b>1000</b></div>
+          <div class="prow"><span>学习率</span><b>1e-4</b></div>
+          <div class="prow"><span>批大小</span><b>4</b></div>
+          <div class="prow"><span>数据集图片</span><b>32 张</b></div>
+        </div>
+        <div class="actrow"><button class="tb-btn">重新训练</button><button class="tb-btn primary">新的训练</button></div>
+      </div>
+      <div id="ttabLog" style="display:none;">
+        <div class="curvebox">
+          <div class="curvetitle">Loss/Average</div>
+          <svg width="100%" height="132" viewBox="0 0 320 132" preserveAspectRatio="xMidYMid meet">
+            <defs><linearGradient id="lg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#6FA3F0" stop-opacity=".45"/><stop offset="1" stop-color="#6FA3F0" stop-opacity=".05"/></linearGradient></defs>
+            <polygon points="24,78 98,26 172,72 246,42 296,94 296,120 24,120" fill="url(#lg)"/>
+            <polyline points="24,78 98,26 172,72 246,42 296,94" fill="none" stroke="#3B6FE0" stroke-width="2.4" stroke-linejoin="round"/>
+            <line x1="24" y1="120" x2="296" y2="120" stroke="#C4CFE0" stroke-width="1"/>
+            <text x="24" y="132" font-size="9" fill="#8A96A8">0</text>
+            <text x="92" y="132" font-size="9" fill="#8A96A8">1</text>
+            <text x="166" y="132" font-size="9" fill="#8A96A8">2</text>
+            <text x="240" y="132" font-size="9" fill="#8A96A8">3</text>
+            <text x="290" y="132" font-size="9" fill="#8A96A8">4</text>
+            <text x="12" y="18" font-size="9" fill="#8A96A8">loss</text>
+          </svg>
+        </div>
+        <div class="actrow"><button class="tb-btn">重新训练</button><button class="tb-btn primary">新的训练</button></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===== 模型详情 ===== -->
+<section class="view" id="view-mdetail">
+  <div class="detailtop">
+    <button class="tb-btn" id="backModel">返回</button>
+    <div class="page-title" style="margin:0;flex:1;" id="mDetailTitle">模型详情</div>
+  </div>
+  <div class="mdetail">
+    <div class="left">
+      <div class="mdimg" id="mdImg1"><span>示例图 1</span><span style="position:absolute;bottom:6px;right:6px;font-size:9px;background:rgba(0,0,0,.32);padding:1px 6px;border-radius:4px;">AI生成</span></div>
+      <div class="mdimg" id="mdImg2"><span>示例图 2</span><span style="position:absolute;bottom:6px;right:6px;font-size:9px;background:rgba(0,0,0,.32);padding:1px 6px;border-radius:4px;">AI生成</span></div>
+    </div>
+    <div class="right">
+      <div class="mdhead">
+        <h2 id="mdName">模型名称</h2>
+        <div class="mdmeta" id="mdMeta"></div>
+      </div>
+      <div class="mdcreator"><span class="ava">I</span><span id="mdCreator">管理员</span></div>
+      <div class="mdbtns">
+        <button class="tb-btn primary" id="mdChatGo">生图</button>
+      </div>
+      <div class="mdbtns" id="mdDlBtns">
+        <button class="tb-btn">加入模型库</button>
+        <button class="tb-btn">下载(15.00GB)</button>
+      </div>
+      <div class="mdsect"><b>版本介绍</b><p class="mdintro" id="mdIntro">—</p></div>
+    </div>
+  </div>
+  <div class="mdcmt" id="mdCmtBox">
+    <div class="mdcreator"><b>讨论 0</b><span style="margin-left:auto;font-size:11px;color:var(--sub);">最新 · 最热</span></div>
+    <div class="idcomment"><input placeholder="请发表评论~"><button class="tb-btn primary">发送</button></div>
+  </div>
+</section>
+
+<!-- ===== 图片详情 ===== -->
+<section class="view" id="view-idetail">
+  <div class="detailtop">
+    <button class="tb-btn" id="backImg">返回</button>
+    <div class="page-title" style="margin:0;flex:1;" id="iDetailTitle">图片详情</div>
+  </div>
+  <div class="idetail">
+    <div class="left">
+      <div class="idimg" id="idImg"><span id="idImgName">图片</span><span style="position:absolute;bottom:6px;right:6px;font-size:9px;background:rgba(0,0,0,.32);padding:1px 6px;border-radius:4px;">AI生成</span></div>
+    </div>
+    <div class="right">
+      <div class="mdcreator" id="idCreatorRow"><span class="ava">I</span><span>管理员</span></div>
+      <div class="genpanel">
+        <div class="gphead"><b>生成信息</b><span><button class="tb-btn" id="idCopy">全部复制</button><button class="tb-btn primary" id="idOneGo">一键生成</button></span></div>
+        <div class="gprow"><span class="k">引用模型</span><span class="v">暂无引用模型</span></div>
+        <div class="gprow"><span class="k">正面提示词 prompt</span></div>
+        <div class="gpbox" id="idPos">—</div>
+        <div class="gprow"><span class="k">负面提示词 prompt</span></div>
+        <div class="gpbox" id="idNeg">—</div>
+        <div class="gprow"><span class="k">参数</span></div>
+        <div class="gpparams" id="idParams"></div>
+      </div>
+      <div id="idCmtBox">
+        <div class="mdcreator" style="margin-top:12px;"><b>讨论 0</b><span style="margin-left:auto;font-size:11px;color:var(--sub);">最新 · 最热</span></div>
+        <div class="idcomment"><input placeholder="请发表评论~"><button class="tb-btn primary">发送</button></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===== 工作流详情 ===== -->
+<section class="view" id="view-wfdetail">
+  <div class="detailtop">
+    <button class="tb-btn" id="backWf">返回</button>
+    <div class="page-title" style="margin:0;flex:1;" id="wfDetailTitle">工作流详情</div>
+  </div>
+  <div class="mdetail">
+    <div class="left">
+      <div class="mdimg" id="wfImg1"><span>工作流预览 1</span><span style="position:absolute;bottom:6px;right:6px;font-size:9px;background:rgba(0,0,0,.32);padding:1px 6px;border-radius:4px;">AI生成</span></div>
+      <div class="mdimg" id="wfImg2"><span>工作流预览 2</span><span style="position:absolute;bottom:6px;right:6px;font-size:9px;background:rgba(0,0,0,.32);padding:1px 6px;border-radius:4px;">AI生成</span></div>
+    </div>
+    <div class="right">
+      <div class="mdhead"><h2 id="wfName">工作流名称</h2><div class="mdmeta" id="wfMeta"></div></div>
+      <div class="mdcreator"><span class="ava">I</span><span>管理员</span></div>
+      <div class="mdbtns"><button class="tb-btn primary" id="wfRunGo">运行工作流</button></div>
+      <div class="mdbtns" id="wfDlBtns"><button class="tb-btn">加入模型库</button><button class="tb-btn">下载(15.00GB)</button></div>
+      <div class="mdsect"><b>模型介绍</b><p class="mdintro" id="wfIntro">—</p></div>
+    </div>
+  </div>
+  <div class="mdcmt" id="wfCmtBox">
+    <div class="mdcreator"><b>讨论 0</b><span style="margin-left:auto;font-size:11px;color:var(--sub);">最新 · 最热</span></div>
+    <div class="idcomment"><input placeholder="请发表评论~"><button class="tb-btn primary">发送</button></div>
+  </div>
+</section>
+
+<!-- ===== 上传AI图片 ===== -->
+<section class="view" id="view-publish-img">
+  <div class="detailtop"><button class="tb-btn" id="backPub1">返回</button><div class="page-title" style="margin:0;flex:1;">上传AI图片</div></div>
+  <div class="pubbox">
+    <div class="pubdrop"><div class="pubdrop-in">拖拽图片到此处或点击上传<br><span>请勿上传裸露、暴力、血腥或其他包含非法信息的图片</span><br><span>最多可上传8张图片，图片不超过30M</span></div></div>
+    <div class="pubnote">上传成功后将保存到「我的发布」，仅自己可见</div>
+    <div class="pubrow"><label>图片标题 *</label><input placeholder="请输入图片标题"><span class="cnt">0/30</span></div>
+    <div class="pubrow"><label>图片类别 *</label>
+      <div class="sel" style="width:280px;" id="catSel1"><span id="catVal1">请选择图片类别</span><span class="arr">▾</span>
+        <div class="imenu" id="catDD1"></div>
+      </div>
+    </div>
+    <div class="pubrow"><label>描述信息</label><textarea class="pubta" placeholder="请输入描述信息"></textarea></div>
+    <div class="pubfoot"><button class="tb-btn primary" id="pubGo1">上传</button></div>
+  </div>
+</section>
+
+<!-- ===== 上传设计图片 ===== -->
+<section class="view" id="view-publish-lib">
+  <div class="detailtop"><button class="tb-btn" id="backPub2">返回</button><div class="page-title" style="margin:0;flex:1;">上传设计图片</div></div>
+  <div class="pubbox">
+    <div class="pubdrop"><div class="pubdrop-in">拖拽图片到此处或点击上传<br><span>请勿上传裸露、暴力、血腥或其他包含非法信息的图片</span><br><span>最多可上传1张图片，图片不超过30M</span></div></div>
+    <div class="pubnote">上传成功后将保存到「我的发布」，仅自己可见</div>
+    <div class="pubrow"><label>图片标题 *</label><input placeholder="请输入图片标题"><span class="cnt">0/30</span></div>
+    <div class="pubrow"><label>图片类别 *</label>
+      <div class="sel" style="width:280px;" id="catSel2"><span id="catVal2">请选择图片类别</span><span class="arr">▾</span>
+        <div class="imenu" id="catDD2"></div>
+      </div>
+    </div>
+    <div class="pubrow"><label>描述信息</label><textarea class="pubta" placeholder="请输入描述信息"></textarea></div>
+    <div class="pubfoot"><button class="tb-btn primary" id="pubGo2">上传</button></div>
+  </div>
+</section>
+
+<!-- ===== 上传模型 ===== -->
+<section class="view" id="view-publish-model">
+  <div class="detailtop"><button class="tb-btn" id="backPub3">返回</button><div class="page-title" style="margin:0;flex:1;">上传模型</div></div>
+  <div class="pubbox">
+    <div class="pubrow"><label>模型名称 *</label><input placeholder="请输入模型名称"><span class="cnt">0/30</span></div>
+    <div class="pubrow"><label>原创内容 *</label><span class="chk"><input type="radio" name="ori1" checked>原创</span><span class="chk"><input type="radio" name="ori1">转载</span></div>
+    <div class="pubrow"><label>模型类别 *</label>
+      <div class="sel" style="width:280px;" id="catSel3"><span id="catVal3">请选择模型类别</span><span class="arr">▾</span>
+        <div class="imenu" id="catDD3"></div>
+      </div>
+    </div>
+    <div class="pubrow"><label>描述</label><textarea class="pubta" placeholder="请输入描述内容"></textarea></div>
+    <div class="pubrow"><label>上传文件 *</label>
+      <div class="upbox">点击选择文件或拖拽文件到此区域<br><span class="upnote">可接受的文件：.ckpt、.pt、.safetensors、.bin、.zip、.yaml、.yml</span></div>
+    </div>
+    <div class="pubrow"><label>上传图片 *</label>
+      <div class="upbox">拖拽图片到此处或点击上传<br><span class="upnote">请勿上传裸露、暴力、血腥或其他包含非法信息的图片<br>最多可上传20张图片，图片不超过30M</span></div>
+      <div class="upempty">暂无上传图片</div>
+    </div>
+    <div class="pubfoot"><button class="tb-btn primary" id="pubGo3">上传</button></div>
+    <div class="pubdecl">声明：1. 请勿转载境外模型 2. 请勿上传色情、暴力等违法内容 3. 您所上传的内容需使用具有合法来源的数据 4. 不得侵害他人依法享有的知识产权</div>
+  </div>
+</section>
+
+<!-- ===== 上传工作流 ===== -->
+<section class="view" id="view-publish-wf">
+  <div class="detailtop"><button class="tb-btn" id="backPub4">返回</button><div class="page-title" style="margin:0;flex:1;">上传工作流</div></div>
+  <div class="pubbox">
+    <div class="pubsteps"><span class="on">1 创建工作流</span><span>2 添加版本</span><span>3 上传文件</span><span>4 上传图片</span></div>
+    <div class="pubrow"><label>工作流名称 *</label><input placeholder="请输入工作流名称"><span class="cnt">0/30</span></div>
+    <div class="pubrow"><label>原创内容 *</label><span class="chk"><input type="radio" name="ori2" checked>原创</span><span class="chk"><input type="radio" name="ori2">转载</span></div>
+    <div class="pubrow"><label>工作流类别 *</label>
+      <div class="sel" style="width:280px;" id="catSel4"><span id="catVal4">请选择工作流类别</span><span class="arr">▾</span>
+        <div class="imenu" id="catDD4"></div>
+      </div>
+    </div>
+    <div class="pubrow"><label>描述</label><textarea class="pubta" placeholder="请输入描述内容"></textarea></div>
+    <div class="pubrow"><label>用户使用权限</label>
+      <div class="lic"><span class="chk"><input type="checkbox" checked>允许在本平台在线使用</span><span class="chk"><input type="checkbox">允许下载工作流</span></div>
+      <div class="lic"><span class="chk"><input type="checkbox" checked>生成图片可出售或用于商业目的</span></div>
+    </div>
+    <div class="pubfoot"><button class="tb-btn primary" id="pubGo4">下一步</button></div>
+    <div class="pubdecl">声明：1. 请勿转载境外工作流 2. 请勿上传色情、暴力等违法内容 3. 您所上传的内容需使用具有合法来源的数据 4. 不得侵害他人依法享有的知识产权</div>
+  </div>
+</section>
+
+<!-- ===== 我的 ===== -->
+<section class="view" id="view-mine">
+  <div class="minehead">
+    <span class="ava" style="width:52px;height:52px;font-size:22px;">I</span>
+    <div class="minfo"><div class="mname">普通用户</div><div class="msub">在这里管理你上传的模型、图片与工作流（仅自己可见）</div></div>
+    <button class="tb-btn" id="editProfile">编辑个人资料</button>
+  </div>
+  <div class="minetabs"><button class="active" data-mtab="publish">我的发布</button><button data-mtab="fav">我的收藏</button><button data-mtab="settings">账号设置</button></div>
+  <div class="minewrap">
+    <div class="mineside">
+      <div class="mside-title">我的发布</div>
+      <div class="mside-item active" data-mcat="img">AI图片 <b>33</b></div>
+      <div class="mside-item" data-mcat="lib">图库 <b>0</b></div>
+      <div class="mside-item" data-mcat="model">模型 <b>33</b></div>
+    </div>
+    <div class="minegrid">
+      <div class="sec-head"><h2 id="mineTitle">我的模型</h2></div>
+      <div class="mfilter" id="mineFilter"></div>
+      <div class="grid4" id="mineGrid"></div>
+    </div>
+  </div>
+</section>
+
+<!-- ===== 我的收藏 ===== -->
+<section class="view" id="view-fav">
+  <div class="minehead">
+    <span class="ava" style="width:52px;height:52px;font-size:22px;">I</span>
+    <div class="minfo"><div class="mname">普通用户</div><div class="msub">收藏的官方模型、图片与工作流</div></div>
+    <button class="tb-btn" id="editProfile2">编辑个人资料</button>
+  </div>
+  <div class="minetabs"><button data-mtab="publish">我的发布</button><button class="active" data-mtab="fav">我的收藏</button><button data-mtab="settings">账号设置</button></div>
+  <div class="minewrap">
+    <div class="mineside">
+      <div class="mside-title">我的收藏</div>
+      <div class="mside-item active" data-mcat="img">AI图片 <b>16</b></div>
+      <div class="mside-item" data-mcat="lib">图库 <b>6</b></div>
+      <div class="mside-item" data-mcat="model">模型 <b>24</b></div>
+      <div class="mside-item" data-mcat="wf">工作流 <b>6</b></div>
+    </div>
+    <div class="minegrid">
+      <div class="sec-head"><h2 id="favTitle">收藏的AI图片</h2><span class="all">全部</span></div>
+      <div class="grid4" id="favGrid"></div>
+    </div>
+  </div>
+</section>
+
+<!-- ===== 账号设置 ===== -->
+<section class="view" id="view-settings">
+  <div class="detailtop"><button class="tb-btn" id="backSet">返回</button><div class="page-title" style="margin:0;flex:1;">账号设置</div></div>
+  <div class="pubbox">
+    <div class="pubrow"><label>用户头像</label><div class="setava"><span class="ava" style="width:56px;height:56px;font-size:22px;">I</span><span style="font-size:11px;color:var(--sub);">拖拽图片到此处或点击上传，需小于50MB</span></div></div>
+    <div class="pubrow"><label>用户名 *</label><input value="普通用户"><span class="cnt">4/15</span></div>
+    <div class="pubrow"><label>简介 *</label><input value="物流行业AI生图爱好者"><span class="cnt">9/150</span></div>
+    <div class="pubrow"><label>密码 *</label><button class="tb-btn">修改密码</button></div>
+    <div class="pubfoot"><button class="tb-btn primary" id="setSave">确认修改</button></div>
+  </div>
+</section>
+
+<!-- ===== 训练基础模型选择弹窗 ===== -->
+<div class="modal" id="smModal">
+  <div class="mcard-modal" style="width:960px;max-width:94vw;">
+    <div class="lmhead"><h3>选择模型</h3><button id="smClose">×</button></div>
+    <div class="sm-bar">
+      <button class="tb-btn orange active" data-smtab="official">官方</button>
+      <button class="tb-btn" data-smtab="mine">我的</button>
+      <span class="sm-sp">排序：<b>最新</b> ▾</span>
+      <span class="sm-sp">筛选 ▾</span>
+      <input class="sm-search" placeholder="请输入">
+      <button class="tb-btn primary">搜索</button>
+    </div>
+    <div class="sm-tabs"><button class="active">CheckPoint</button></div>
+    <div class="sm-grid" id="smGrid"></div>
+  </div>
+</div>
+
+<!-- ===== 退出确认 + 登录弹窗 ===== -->
+<div class="modal" id="logoutModal">
+  <div class="mcard-modal">
+    <h3>确认退出登录</h3>
+    <p>退出后需要重新登录才能继续使用本平台服务，确定退出吗？</p>
+    <div class="mbtns"><button class="tb-btn" id="logoutCancel">取消</button><button class="tb-btn primary" id="logoutConfirm">确认退出</button></div>
+  </div>
+</div>
+<div class="modal" id="loginModal">
+  <div class="mcard-modal">
+    <div class="lmhead"><h3>欢迎回来</h3><button id="loginClose">×</button></div>
+    <p class="lmsub">请输入您的帐户信息以开始使用</p>
+    <input class="lminput" id="loginPhone" value="13999999999" placeholder="请输入手机号">
+    <input class="lminput" type="password" id="loginPwd" value="123456" placeholder="请输入密码">
+    <label class="lmchk"><input type="checkbox" checked>记住账号</label>
+    <button class="lmbtn" id="loginGo">登录</button>
+    <div class="lmalt"><button class="tb-btn">短信登录</button><button class="tb-btn">微信登录</button></div>
+    <p class="lmreg">还没有账号？<a>创建账号</a></p>
+  </div>
+</div>
+
+</main>
+
+<div class="overlay" id="overlay"><div class="oview"><div class="big" id="ovBig"></div><div class="bar"><span class="l" id="ovLabel"></span><button id="ovClose">关闭</button></div></div></div>
+
+<!-- ===== ControlNet 参考图设置弹窗 ===== -->
+<div class="cnoverlay" id="cnOverlay">
+  <div class="cnview">
+    <div class="head"><h3>参考图设置</h3><div class="hdbtns"><button class="cancel" id="cnCancel">取消</button><button class="ok" id="cnOk">确定</button></div></div>
+    <div class="cnmain">
+      <div class="side">
+        <div class="st">参考图原图<span class="cnt" id="cnCount">0/4</span></div>
+        <div class="cnthumbs" id="cnThumbs"></div>
+      </div>
+      <div class="side">
+        <div class="st">预处理结果<span class="cnt" id="cnModeName">未选择</span></div>
+        <div class="cnprev" id="cnPrev"><span style="color:var(--sub2);font-weight:400;">选择下方ControlNet类型后，此处显示对应预处理结果</span></div>
+      </div>
+    </div>
+    <div class="st" style="font-size:12px;font-weight:700;margin-bottom:8px;">请选择图片的参考方式：</div>
+    <div class="cnsel" id="cnSel"></div>
+    <div class="cnseltip">点击上方缩略图切换要设置的参考图，每张参考图可独立选择ControlNet类型</div>
+  </div>
+</div>
+
+<!-- ===== LoRA 风格模型选择弹窗 ===== -->
+<div class="loroverlay" id="lorOverlay">
+  <div class="lorview">
+    <div class="head">
+      <h3>选择LoRA风格模型</h3>
+      <div class="lorsearch"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.5" y2="16.5"/></svg><input placeholder="输入模型名称、作者、标签搜索"></div>
+      <button class="close" id="lorClose">×</button>
+    </div>
+    <div class="lortabs">
+      <button class="active" data-ltab="official">官方</button>
+      <button data-ltab="mine">我的</button>
+    </div>
+    <div class="lorcats"><button class="active">全部</button><button>仓储仓库</button><button>货运卡车</button><button>集装箱</button><button>港口码头</button><button>冷链物流</button><button>分拣配送</button><button>质检场景</button><button>物流设备</button><label class="lorfavonly" style="display:inline-flex;align-items:center;gap:4px;font-size:12px;color:var(--sub);cursor:pointer;margin-left:auto;"><input type="checkbox" id="lorFavOnly"> 仅看已收藏</label></div>
+    <div class="lorgrid" id="lorGrid"></div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+(function(){
+'use strict';
+var toastEl=document.getElementById('toast'),toastTimer=null;
+function toast(m){toastEl.textContent=m;toastEl.classList.add('show');clearTimeout(toastTimer);toastTimer=setTimeout(function(){toastEl.classList.remove('show');},2200);}
+var PALETTES=['linear-gradient(135deg,#3B6FE0,#7BA3EE)','linear-gradient(135deg,#1E5A44,#67A98B)','linear-gradient(135deg,#8A6A3E,#C9A87C)','linear-gradient(135deg,#5B4B8A,#9C8FD0)','linear-gradient(135deg,#7A4D00,#C79A4B)','linear-gradient(135deg,#3E5A6B,#7E9BAE)'];
+
+/* ===== 路由 ===== */
+var views=document.querySelectorAll('.view');
+function showView(name){
+  state.view=name;
+  views.forEach(function(v){v.classList.remove('active');});
+  var el=document.getElementById('view-'+name); if(el) el.classList.add('active');
+  document.querySelectorAll('.navrow button[data-view]').forEach(function(b){b.classList.toggle('active',b.getAttribute('data-view')===name);});
+  if(name==='chat') renderConv();
+  if(name==='wfgen') setTimeout(function(){drawWfLinks();},60);
+  closeAllDD(); closeAllMenus();
+  /* 核心功能页沉浸式：隐藏核心卡片+导航条；内容页显示 */
+  var immersive=['chat','generate','wfgen','train','trainlist','traindetail','mdetail','idetail','wfdetail','publish-img','publish-lib','publish-model','publish-wf','mine','fav','settings'].indexOf(name)>-1;
+  var coreEl=document.querySelector('.core'), navEl=document.querySelector('.navrow');
+  if(coreEl) coreEl.style.display=immersive?'none':'flex';
+  if(navEl) navEl.style.display=immersive?'none':'flex';
+  window.scrollTo(0,0);
+}
+document.getElementById('logoBtn').addEventListener('click',function(){showView('home');});
+document.querySelectorAll('[data-view]').forEach(function(el){el.addEventListener('click',function(){showView(el.getAttribute('data-view'));});});
+document.querySelectorAll('[data-goto]').forEach(function(el){el.addEventListener('click',function(){
+  var t=el.getAttribute('data-goto');
+  showView(t);
+  if(t==='mine')renderMine('img','');
+  if(t==='fav')renderFav('img');
+});});
+
+/* ===== 下拉 ===== */
+function closeAllDD(){document.querySelectorAll('.dd.open').forEach(function(m){m.classList.remove('open');});}
+document.getElementById('pubBtn').addEventListener('click',function(e){e.stopPropagation();var d=document.getElementById('pubDD');var w=d.classList.contains('open');closeAllDD();if(!w)d.classList.add('open');});
+document.getElementById('userBtn').addEventListener('click',function(e){e.stopPropagation();var d=document.getElementById('userDD');var w=d.classList.contains('open');closeAllDD();if(!w)d.classList.add('open');});
+document.querySelectorAll('.dd .mi[data-act]').forEach(function(mi){
+  mi.addEventListener('click',function(){
+    var a=mi.getAttribute('data-act');
+    if(a==='退出登录'){openLogout();}
+    if(a==='账号设置'){showView('settings');}
+    else if(a==='上传AI图片'){showView('publish-img');}
+    else if(a==='上传设计图片'){showView('publish-lib');}
+    else if(a==='上传模型'){showView('publish-model');}
+    else if(a==='上传工作流'){showView('publish-wf');}
+    else {toast('原型演示：'+a);}
+    closeAllDD();
+  });
+});
+document.addEventListener('click',function(e){
+  if(!e.target.closest('.tb-user')&&!e.target.closest('#pubBtn')&&!e.target.closest('.top-seldd')) closeAllDD();
+});
+
+/* ===== 卡片渲染 ===== */
+function ph(seed){return PALETTES[[0,1,2,3,4,5][seed%6]];}
+function mcardHtml(g,label,type1,type2,stats,src){
+  src=src||'official';
+  var corner=src==='mine'?'<span class="corner-tag mine">我的</span>':'<span class="corner-tag official">官方</span>';
+  return '<div class="mcard"><div class="ph" style="background:'+ph(g)+'">'+corner+'<span>'+label+'</span><span style="position:absolute;bottom:6px;right:6px;font-size:9px;background:rgba(0,0,0,.32);padding:1px 6px;border-radius:4px;">AI生成</span></div><div class="body"><div class="tagrow"><span class="tag '+(type1==='CheckPoint'?'ck':(type1==='LoRA'?'sd':''))+'">'+type1+'</span><span class="tag">'+type2+'</span></div><div class="t">'+label+'</div><div class="stats">'+stats+'</div></div></div>';
+}
+function imgHtml(g,label,sub,src,noCorner){
+  src=src||'official';
+  var corner=noCorner?'':(src==='mine'?'<span class="corner-tag mine">我的</span>':'<span class="corner-tag official">官方</span>');
+  return '<div class="mcard"><div class="ph" style="background:'+ph(g)+'">'+corner+'<span>'+label+'</span><span style="position:absolute;bottom:6px;right:6px;font-size:9px;background:rgba(0,0,0,.32);padding:1px 6px;border-radius:4px;">AI生成</span></div><div class="body"><div class="t">'+label+'</div><div class="s" style="font-size:11px;color:var(--sub);margin-top:2px;">'+sub+'</div></div></div>';
+}
+function st(d,p,c,l){return '<i>↓'+d+'</i><i>▶'+p+'</i><i>◎'+c+'</i><i>👍'+l+'</i>';}
+
+var homeModels=[
+  ['SDXL 1.0','CheckPoint','仓储仓库底模',st('37','12','21','9')],
+  ['Flux.1 D','LoRA','港口码头LoRA',st('26','4','18','11')],
+  ['Flux.1 D','LoRA','集装箱堆场LoRA',st('31','6','22','13')],
+  ['SDXL 1.0','LoRA','分拣配送LoRA',st('45','2','29','17')],
+  ['Flux.1 D','LoRA','冷链场景LoRA',st('22','3','14','8')],
+  ['Flux.1 D','LoRA','货运卡车LoRA',st('28','5','17','10')],
+  ['Flux.1 D','LoRA','质检场景LoRA',st('19','1','11','6')],
+  ['Flux.1 D','LoRA','仓库自动化LoRA',st('24','4','15','9')],
+  ['Flux.1 D','LoRA','物流无人机LoRA',st('17','2','10','5')],
+  ['SDXL 1.0','CheckPoint','物流场景底模',st('15','0','9','4')]
+];
+document.getElementById('homeModels').innerHTML=homeModels.map(function(m,i){return mcardHtml(i,m[2],m[1],m[0],m[3]);}).join('');
+document.querySelectorAll('#homeModels .mcard').forEach(function(c,idx){c.onclick=function(){renderMDetail(homeModels[idx][2],homeModels[idx][1],homeModels[idx][0]);showView('mdetail');};});
+var homeImgs=['港口码头黄昏','仓库内部全景','集装箱堆场','冷链冷库','质检工作台','运输车队','分拣俯拍','堆场全景'];
+document.getElementById('homeImgs').innerHTML=homeImgs.map(function(t,i){return imgHtml(i,t,'精选图片');}).join('');
+document.querySelectorAll('#homeImgs .mcard').forEach(function(c,idx){c.onclick=function(){renderIDetail(homeImgs[idx],'精选图片');showView('idetail');};});
+var homeLibs=['物流场景模板库','集装箱素材','仓储素材','分拣素材','冷链素材','港口素材','免抠卡车','物流插画'];
+document.getElementById('homeLibs').innerHTML=homeLibs.map(function(t,i){return imgHtml(i,t,'设计图库');}).join('');
+document.querySelectorAll('#homeLibs .mcard').forEach(function(c,idx){c.onclick=function(){renderIDetail(homeLibs[idx],'设计图库');showView('idetail');};});
+
+var wfData=[['仓储仓库写实','Workflow','ComfyUI',st('37','12','21','9')],['集装箱特写','Workflow','ComfyUI',st('26','4','18','11')],['港口码头全景','Workflow','ComfyUI',st('31','6','22','13')],['分拣流水线','Workflow','ComfyUI',st('45','2','29','17')],['冷链仓库','Workflow','ComfyUI',st('22','3','14','8')],['质检场景','Workflow','ComfyUI',st('28','5','17','10')],['货运卡车车队','Workflow','ComfyUI',st('19','1','11','6')],['仓库自动化分拣','Workflow','ComfyUI',st('24','4','15','9')],['堆场调度工作流','Workflow','ComfyUI',st('17','2','10','5')],['港机设备工作流','Workflow','ComfyUI',st('15','0','9','4')]];
+document.getElementById('wfGrid').innerHTML=wfData.map(function(w,i){return mcardHtml(i,w[0],w[1],w[2],w[3]);}).join('');
+document.querySelectorAll('#wfGrid .mcard').forEach(function(c,idx){c.onclick=function(){renderWfDetail(wfData[idx][0]);showView('wfdetail');};});
+
+var modelData=[['Qwen-Image 底模','基础底模','开源','文字渲染强'],['Flux.2 klein 底模','基础底模','开源','写实标杆'],['SDXL 1.0 底模','基础底模','开源','生态最大'],['Flux.1 schnell 底模','基础底模','开源','快速出图'],['集装箱堆场LoRA','LoRA','Flux.1 D','集装箱'],['货运卡车LoRA','LoRA','Flux.1 D','货运卡车'],['仓储仓库LoRA','LoRA','Flux.1 D','仓储仓库'],['港口码头LoRA','LoRA','Flux.1 D','港口码头'],['冷链场景LoRA','LoRA','Flux.1 D','冷链物流'],['分拣配送LoRA','LoRA','Flux.1 D','分拣配送'],['质检场景LoRA','LoRA','Flux.1 D','质检场景'],['物流人物LoRA','LoRA','Flux.1 D','物流人物'],['仓库自动化LoRA','LoRA','Flux.1 D','仓储仓库'],['堆场调度LoRA','LoRA','Flux.1 D','集装箱'],['物流无人机LoRA','LoRA','Flux.1 D','物流设备'],['港机设备LoRA','LoRA','SDXL 1.0','物流设备']];
+document.getElementById('modelGrid').innerHTML=modelData.map(function(m,i){return mcardHtml(i,m[0],m[1],m[2],'下载 '+(i+3)*137);}).join('');
+document.querySelectorAll('#modelGrid .mcard').forEach(function(c,idx){c.onclick=function(){renderMDetail(modelData[idx][0],modelData[idx][1],modelData[idx][2]);showView('mdetail');};});
+
+var galleryData=['港口码头黄昏','仓库自动化','集装箱吊装','冷链冷库','质检工作台','货运车队','分拣流水线','堆场全景','岸桥装卸','仓储货架','冷链运输','分拣中心'];document.getElementById('galleryGrid').innerHTML=galleryData.map(function(t,i){return imgHtml(i,t,'AI画廊 · 物流行业');}).join('');
+document.querySelectorAll('#galleryGrid .mcard').forEach(function(c,idx){c.onclick=function(){renderIDetail(galleryData[idx],'AI画廊');showView('idetail');};});
+var libData=[['集装箱素材','PNG'],['仓储背景','JPG'],['运输车队','PNG'],['分拣素材','PNG'],['冷链素材','PNG'],['港口素材','JPG'],['免抠卡车','PNG'],['物流插画','AI'],['3D堆场','3D'],['质检图标','SVG'],['冷库背景','JPG'],['码头航拍','PNG']];
+document.getElementById('libGrid').innerHTML=libData.map(function(l,i){return imgHtml(i,l[0],'设计图库 · '+l[1]);}).join('');
+document.querySelectorAll('#libGrid .mcard').forEach(function(c,idx){c.onclick=function(){renderIDetail(libData[idx][0],'设计图库');showView('idetail');};});
+
+document.querySelectorAll('.fbar .fchip').forEach(function(c){c.onclick=function(){c.parentNode.querySelectorAll('.fchip').forEach(function(x){x.classList.remove('active');});c.classList.add('active');};});
+
+/* ===== 对话生图 ===== */
+var MODELS=[{name:'Qwen-Image',sub:'中文理解强 · 默认推荐 · 开源'},{name:'Flux.2 klein',sub:'开源质量标杆 · 大场景写实'},{name:'SDXL 1.0',sub:'兼容海量LoRA · 生态成熟'},{name:'Z-Image',sub:'轻量快速 · 开源'}];
+var SCENES=[
+  {name:'仓储仓库',zh:'大型自动化仓储仓库内部，高层货架整齐排列，叉车正在搬运货物，明亮日光灯照明，广角镜头，写实摄影',model:'Qwen-Image',size:'1:1'},
+  {name:'货运卡车',zh:'一辆白色厢式货运卡车停在仓库装货区，侧面视角，工人正在装货，傍晚光线，写实',model:'Qwen-Image',size:'1:1'},
+  {name:'集装箱',zh:'集装箱堆场全景，彩色集装箱整齐堆叠，龙门吊正在吊装，蓝天白云，写实',model:'Flux.2 klein',size:'3:2'},
+  {name:'港口码头',zh:'大型集装箱港口码头，岸桥起重机正在装卸船舶，海面停靠货轮，黄昏金色光线，航拍视角，写实',model:'Flux.2 klein',size:'3:2'},
+  {name:'冷链物流',zh:'冷链冷库内部，低温环境雾气，成排冷藏货架堆放冷冻货物，穿防寒服工人操作，冷白灯光，写实',model:'Qwen-Image',size:'1:1'},
+  {name:'分拣配送',zh:'快递分拣中心内部，自动化分拣流水线，传送带上包裹快速分流，操作台旁工作人员扫码，明亮车间，写实',model:'Qwen-Image',size:'1:1'},
+  {name:'质检场景',zh:'质检工作台，货物样品放在检验台，质检员手持扫码枪核对标签，明亮照明，特写，写实',model:'Qwen-Image',size:'1:1'},
+  {name:'物流设备',zh:'物流设备特写，叉车、堆高机、AGV搬运机器人在仓库通道作业，工业设备质感，浅景深，写实',model:'Flux.2 klein',size:'1:1'}
+];
+var SIZES=[
+  {name:'1:1',res:'1024×1024'},
+  {name:'2:3',res:'896×1152'},
+  {name:'3:2',res:'1152×896'},
+  {name:'3:4',res:'768×1024'},
+  {name:'4:3',res:'1024×768'},
+  {name:'9:16',res:'576×1024'},
+  {name:'16:9',res:'1024×576'}
+];
+function makeAiMsg(o){
+  var n=o.count||(o.images?o.images.length:2),imgs=o.images||[];
+  for(var i=imgs.length;i<n;i++){imgs.push(i);}
+  return {t:'ai',status:o.status||'ok',model:o.model||'Qwen-Image',size:o.size||'1:1',count:n,images:imgs,sceneName:o.sceneName||null,note:o.note||'',time:o.time||nowTime()};
+}
+var CONVS={
+  'new1':{title:'新对话',msgs:[]},
+  'c1':{title:'今日·集装箱港口',msgs:[
+    {t:'user',text:'生成一张港口集装箱堆场，龙门吊装卸，黄昏',time:'14:20'},
+    makeAiMsg({model:'Qwen-Image',size:'3:2',count:2,sceneName:'港口码头',time:'14:21'})
+  ]},
+  'c2':{title:'昨天·仓库内部',msgs:[
+    {t:'user',text:'生成一张自动化仓库内部照片',time:'昨天 16:02'},
+    makeAiMsg({model:'Qwen-Image',size:'1:1',count:3,sceneName:'仓储仓库',time:'昨天 16:03'})
+  ]},
+  'c3':{title:'周一·分拣配送',msgs:[
+    {t:'user',text:'生成一张快递分拣中心内部，传送带分拣包裹',time:'周一 10:15'},
+    makeAiMsg({model:'Qwen-Image',size:'1:1',count:1,sceneName:'分拣配送',time:'周一 10:16'})
+  ]}
+};
+var state={convId:'new1',view:'home',model:'Qwen-Image',scene:null,size:'1:1',count:2,refImages:[],cnTypes:[],lora:null,generating:false};
+var convOrder=['new1','c1','c2','c3'];
+var flowEl=document.getElementById('flow'),convListEl=document.getElementById('convList'),convTitleEl=document.getElementById('convTitle'),promptEl=document.getElementById('promptInput');
+var genLibBtn=document.getElementById('genLibBtn');
+var chatWrapEl=document.getElementById('chatWrap');
+function nowTime(){var d=new Date();return (d.getHours()<10?'0':'')+d.getHours()+':'+(d.getMinutes()<10?'0':'')+d.getMinutes();}
+function renderEmpty(){
+  var e=document.createElement('div');e.className='empty';
+  e.innerHTML='<div class="hi"><svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M21 8v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2h3l2-2h4l2 2h3a2 2 0 0 1 2 2z"/><circle cx="12" cy="12.5" r="3.4"/></svg></div><h2>你好，我是物流图像助手</h2><p>告诉我你想生成的物流场景，我会帮你出图。支持多轮对话修改、参考图编辑、场景模板快速出图。</p><div class="sugs"><span class="sug">生成一张港口集装箱堆场，黄昏光线</span><span class="sug">快递分拣中心，传送带快速分拣包裹</span><span class="sug">冷链冷库内部，货架整齐</span></div>';
+  e.querySelectorAll('.sug').forEach(function(s){s.onclick=function(){promptEl.value=s.textContent;promptEl.focus();if(typeof syncSendBtn==='function')syncSendBtn();toast('示例已填入，可修改后发送');};});
+  return e;
+}
+function renderConv(){
+  var conv=CONVS[state.convId];convTitleEl.textContent=conv.title;
+  flowEl.innerHTML='';
+  if(!conv.msgs.length){flowEl.appendChild(renderEmpty());}else{conv.msgs.forEach(function(m){flowEl.appendChild(msgEl(m));});}
+  flowEl.scrollTop=flowEl.scrollHeight;
+}
+function msgEl(m){
+  var wrap=document.createElement('div');wrap.className='msg '+m.t;
+  if(m.t==='user'){
+    var b=document.createElement('div');b.className='bubble';b.textContent=m.text;wrap.appendChild(b);
+    if(m.ref){
+      var refs=Array.isArray(m.ref)?m.ref:[m.ref];
+      var r=document.createElement('div');r.className='refthumb';
+      r.innerHTML=refs.map(function(rf){
+        if(rf.indexOf('data:')===0) return '<img src="'+rf+'" alt="参考图">';
+        var idx=(typeof rf==='string'&&rf.indexOf('img')===0)?(parseInt(rf.slice(3))||0):0;
+        return '<div style="width:54px;height:54px;border-radius:6px;background:'+PALETTES[idx%PALETTES.length]+';display:flex;align-items:center;justify-content:center;color:#fff;font-size:10px;flex-shrink:0;">原图</div>';
+      }).join('');
+      wrap.appendChild(r);
+    }
+  }else if(m.gening){
+    var g=document.createElement('div');g.className='gening';g.innerHTML='<div class="spinner"></div><span>'+(m.text||'正在生成…（预计15秒）')+'</span>';wrap.appendChild(g);
+  }else{
+    var box=document.createElement('div');box.style.cssText='width:100%;';
+    var sb=document.createElement('div');sb.className='statusbar';
+    if(m.status==='ok'){sb.innerHTML='<span class="bub bub-ok"><span class="dot"></span>生成成功</span>';}
+    else{sb.innerHTML='<span class="bub bub-fail"><span class="dot"></span>生成失败</span>';}
+    sb.innerHTML+='<span class="bub bub-info">模型 <b>'+m.model+'</b></span>';
+    sb.innerHTML+='<span class="bub bub-info">尺寸 <b>'+m.size+'</b></span>';
+    sb.innerHTML+='<span class="bub bub-info">数量 <b>'+m.count+'张</b></span>';
+    box.appendChild(sb);
+    var grid=document.createElement('div');grid.className='results';
+    for(var i=0;i<m.images.length;i++){grid.appendChild(rcard(i,m));}
+    box.appendChild(grid);
+    var bb=document.createElement('div');bb.className='batchbar';bb.innerHTML='<span class="ttl">本批次：</span>';
+    bb.appendChild(mkBtn('重新生成',function(){redrawBatch(m);}));bb.appendChild(sep());
+    bb.appendChild(mkBtn('批量导出',function(){toast('批量导出PNG：已导出本批次'+m.images.length+'张');}));bb.appendChild(sep());
+    bb.appendChild(mkBtn('删除本次记录',function(){delBatch(m);},true));
+    box.appendChild(bb);wrap.appendChild(box);
+  }
+  var tm=document.createElement('div');tm.className='time';tm.textContent=m.time||'';wrap.appendChild(tm);
+  return wrap;
+}
+function sep(){var s=document.createElement('span');s.className='sep';return s;}
+function mkBtn(t,fn,danger){var b=document.createElement('button');b.textContent=t;if(danger)b.className='danger';b.onclick=fn;return b;}
+function rcard(idx,m){
+  var card=document.createElement('div');card.className='rcard';
+  var ph=document.createElement('div');ph.className='rplace';ph.style.background=PALETTES[m.images[idx]%PALETTES.length];
+  ph.innerHTML='<span>图'+(idx+1)+' · AI生成</span>';
+  var aitag=document.createElement('div');aitag.className='ai-tag';aitag.textContent='AI生成';ph.appendChild(aitag);
+  var more=document.createElement('button');more.className='more';more.textContent='···';ph.appendChild(more);
+  var menu=document.createElement('div');menu.className='imenu';
+  var items=[
+    {t:'查看',fn:function(){openView(idx,m);}},
+    {t:'下载',fn:function(){toast('已开始下载 图'+(idx+1)+'（PNG）');}},
+    {t:'删除',danger:true,fn:function(){delImage(idx,m);}},
+    {t:'超清放大',fn:function(){upscaleImage(idx,m);}},
+    {t:'以图生图',fn:function(){openCnForImage(idx,m);}}
+  ];
+  items.forEach(function(it){
+    var mi=document.createElement('div');mi.className='mi'+(it.danger?' danger':'');
+    mi.textContent=it.t;
+    mi.onclick=function(e){e.stopPropagation();closeAllMenus();it.fn();};
+    menu.appendChild(mi);
+  });
+  more.onclick=function(e){e.stopPropagation();var w=menu.classList.contains('open');closeAllMenus();if(!w)menu.classList.add('open');};
+  card.appendChild(ph);card.appendChild(menu);return card;
+}
+function closeAllMenus(){document.querySelectorAll('.imenu.open').forEach(function(m){m.classList.remove('open');});document.querySelectorAll('.menu.open').forEach(function(m){m.classList.remove('open');});}
+function delImage(idx,m){
+  var conv=CONVS[state.convId];m.images.splice(idx,1);m.count=m.images.length;
+  if(m.images.length===0){var p=conv.msgs.indexOf(m);if(p>-1)conv.msgs.splice(p,1);toast('已删除本批次全部图片，生成记录一并移除');}
+  else{toast('已删除该张图片，剩余'+m.images.length+'张');}
+  renderConv();
+}
+function delBatch(m){var conv=CONVS[state.convId];var p=conv.msgs.indexOf(m);if(p>-1)conv.msgs.splice(p,1);toast('已删除本次生图记录');renderConv();}
+function redrawBatch(m){
+  var conv=CONVS[state.convId];if(state.generating)return;
+  state.generating=true;document.getElementById('sendBtn').disabled=true;
+  conv.msgs.push({t:'ai',gening:true,text:'正在按原参数重新生成…',time:nowTime()});renderConv();
+  setTimeout(function(){
+    conv.msgs.pop();
+    conv.msgs.push(makeAiMsg({model:m.model,size:m.size,count:m.count,sceneName:m.sceneName,note:'已按原参数重新生成（模型/尺寸/数量一致）· 原批次已保留',time:nowTime()}));
+    state.generating=false;document.getElementById('sendBtn').disabled=false;renderConv();
+  },1600);
+}
+function openView(idx,m){
+  var ov=document.getElementById('overlay');
+  document.getElementById('ovBig').style.background=PALETTES[m.images[idx]%PALETTES.length];
+  document.getElementById('ovBig').innerHTML='图'+(idx+1)+' · AI生成';
+  document.getElementById('ovLabel').textContent=(m.sceneName||'物流场景')+' · '+m.model+' · '+m.size;
+  ov.classList.add('open');
+}
+document.getElementById('ovClose').onclick=function(){document.getElementById('overlay').classList.remove('open');};
+document.getElementById('overlay').onclick=function(e){if(e.target===this)this.classList.remove('open');};
+function fakeGenerate(fromText){
+  var conv=CONVS[state.convId];
+  var userText=fromText||promptEl.value.trim();
+  if(!userText&&!state.scene&&!(state.refImages&&state.refImages.length)){toast('请先描述场景或选择场景模板');return;}
+  if(state.generating)return;
+  state.generating=true;document.getElementById('sendBtn').disabled=true;
+  var sceneName=state.scene||'物流场景';
+  var um={t:'user',text:userText||SCENES.filter(function(s){return s.name===state.scene;})[0].zh,time:nowTime()};
+  if(state.refImages&&state.refImages.length)um.ref=state.refImages.slice();
+  conv.msgs.push(um);
+  conv.msgs.push({t:'ai',gening:true,text:'正在生成…（预计15秒）',time:nowTime()});renderConv();
+  /* 发送后清空输入框与已选场景 */
+  promptEl.value='';state.scene=null;
+  document.getElementById('sceneVal').textContent='未选择';
+  var sb=document.getElementById('sendBtn');sb.disabled=true;
+  setTimeout(function(){
+    conv.msgs.pop();
+    conv.msgs.push(makeAiMsg({model:state.model,size:state.size,count:state.count,sceneName:sceneName,note:'已生成'+state.count+'张'+sceneName+'场景图（'+state.model+' · '+advGenDesc()+'）',time:nowTime()}));
+    state.generating=false;sb.disabled=false;renderConv();
+  },1600);
+}
+function renderConvList(){
+  convListEl.innerHTML='';
+  convOrder.forEach(function(id){
+    var c=CONVS[id];var d=document.createElement('div');
+    d.className='item'+(state.convId===id?' active':'');
+    var parts=c.title.split('·');
+    d.innerHTML='<span>'+parts[0]+'</span><span class="d">'+(parts[1]||'')+'</span>';
+    d.onclick=function(){state.convId=id;renderConvList();renderConv();};
+    convListEl.appendChild(d);
+  });
+}
+function applyScene(s){
+  state.scene=s.name;state.model=s.model;state.size=s.size;promptEl.value=s.zh;
+  document.getElementById('sceneVal').textContent=s.name;
+  document.getElementById('modelVal').textContent=s.model;
+  document.getElementById('sizeVal').textContent=s.size;
+  toast('已应用场景模板：'+s.name+'（提示词已填入，可修改）');
+}
+var CONTROLNETS=[
+  {name:'不选择ControlNet（直接图生图）',key:'none'},
+  {name:'Canny(硬边缘)',key:'canny'},{name:'Depth(深度图)',key:'depth'},{name:'正态(法线贴图)',key:'normal'},
+  {name:'OpenPose(姿态)',key:'pose'},{name:'MLSD(直线)',key:'mlsd'},{name:'Lineart(线稿)',key:'lineart'},
+  {name:'SoftEdge(软边缘)',key:'softedge'},{name:'Scribble/Sketch(涂鸦/草图)',key:'scribble'},{name:'Seg(语义分割)',key:'seg'},
+  {name:'Shuffle(随机洗牌)',key:'shuffle'},{name:'Tile/Blur(分块/模糊)',key:'tile'},{name:'Inpaint(局部重绘)',key:'inpaint'},
+  {name:'InstructP2P',key:'instruct'},{name:'Reference(参考)',key:'ref'},{name:'Recolor(重上色)',key:'recolor'},
+  {name:'Revision',key:'revision'},{name:'IP-Adapter(风格迁移)',key:'ipadapter'}
+];
+var CN_PREV_PALETTES=['linear-gradient(135deg,#2E4A8F,#6E93D6)','linear-gradient(135deg,#1E5A44,#67A98B)','linear-gradient(135deg,#5B4B8A,#9C8FD0)','linear-gradient(135deg,#7A4D00,#C79A4B)','linear-gradient(135deg,#3E5A6B,#7E9BAE)','linear-gradient(135deg,#8A3E3E,#C97B7B)'];
+
+var cnOverlay=document.getElementById('cnOverlay');
+var cnThumbsEl=document.getElementById('cnThumbs');
+var cnSelEl=document.getElementById('cnSel');
+var cnPrevEl=document.getElementById('cnPrev');
+var cnModeNameEl=document.getElementById('cnModeName');
+var cnCountEl=document.getElementById('cnCount');
+var fileInput=document.getElementById('fileInput');
+var cnData=[]; /* 每项 {src, cnKey} */
+var cnActive=0;
+function cnName(key){var c=CONTROLNETS.filter(function(x){return x.key===key;})[0];return c?c.name:key;}
+
+function cnSrc(src){
+  if(src.indexOf('data:')===0) return '<img src="'+src+'" alt="参考图">';
+  var idx=(typeof src==='string'&&src.indexOf('img')===0)?(parseInt(src.slice(3))||0):0;
+  return '<div class="noimg" style="background:'+PALETTES[idx%PALETTES.length]+';color:#fff;">原图'+(idx+1)+'</div>';
+}
+function renderCnThumbs(){
+  cnCountEl.textContent=cnData.length+'/4';
+  cnThumbsEl.innerHTML='';
+  cnData.forEach(function(it,i){
+    var d=document.createElement('div');d.className='cnthumb'+(i===cnActive?' sel':'');
+    d.innerHTML=cnSrc(it.src)+(cnData.length>1?'<span class="del" data-i="'+i+'">×</span>':'')+'<span class="cnbadge">'+(it.cnKey==='none'?'直接生图':cnName(it.cnKey))+'</span>';
+    d.onclick=function(){cnActive=i;renderCnThumbs();updateCnPrev();};
+    cnThumbsEl.appendChild(d);
+  });
+  if(cnData.length<4){
+    var a=document.createElement('div');a.className='cnadd';
+    a.innerHTML='<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>继续添加';
+    a.onclick=function(){fileInput.click();};
+    cnThumbsEl.appendChild(a);
+  }
+  cnThumbsEl.querySelectorAll('.del').forEach(function(x){
+    x.onclick=function(e){e.stopPropagation();var i=parseInt(x.getAttribute('data-i'));cnData.splice(i,1);if(cnActive>=cnData.length)cnActive=cnData.length-1;if(cnActive<0)cnActive=0;renderCnThumbs();updateCnPrev();};
+  });
+}
+function renderCnSel(){
+  cnSelEl.innerHTML='';
+  if(!cnData.length) return;
+  var cur=cnData[cnActive].cnKey;
+  CONTROLNETS.forEach(function(c){
+    var b=document.createElement('button');
+    b.className='cnchip'+(c.key==='none'?' none':'')+(c.key===cur?' active':'');
+    b.textContent=c.name;
+    b.onclick=function(){cnData[cnActive].cnKey=c.key;renderCnThumbs();renderCnSel();updateCnPrev();};
+    cnSelEl.appendChild(b);
+  });
+}
+function updateCnPrev(){
+  if(!cnData.length){
+    cnModeNameEl.textContent='未选择';
+    cnPrevEl.style.background='#F2F4F8';
+    cnPrevEl.innerHTML='<span style="color:var(--sub2);font-weight:400;">请先上传参考图</span>';
+    return;
+  }
+  var it=cnData[cnActive];
+  var c=CONTROLNETS.filter(function(x){return x.key===it.cnKey;})[0];
+  cnModeNameEl.textContent=c.key==='none'?'未选择':c.name;
+  if(c.key==='none'){
+    cnPrevEl.style.background='#F2F4F8';
+    cnPrevEl.innerHTML='<span style="color:var(--sub2);font-weight:400;">不选择ControlNet，按原图直接图生图</span>';
+  }else{
+    var gi=Math.abs(c.key.length*7)%CN_PREV_PALETTES.length;
+    cnPrevEl.style.background=CN_PREV_PALETTES[gi];
+    cnPrevEl.innerHTML='<span>'+c.name+' · 预处理结果</span><span class="lbl">预处理：'+c.name+'</span>';
+  }
+}
+function openCnOverlay(seedImgs){
+  cnData=(seedImgs||[]).slice(0,4).map(function(s){return {src:s,cnKey:'none'};});
+  cnActive=0;
+  renderCnThumbs();renderCnSel();updateCnPrev();
+  cnOverlay.classList.add('open');
+}
+function openCnForImage(idx,m){
+  openCnOverlay(['img'+(m.images[idx]||0)]);
+  toast('已带入生成图作为参考图，可选择ControlNet后确定');
+}
+document.getElementById('cnOk').onclick=function(){
+  if(!cnData.length){toast('请至少上传1张参考图');return;}
+  state.refImages=cnData.map(function(x){return x.src;});
+  state.cnTypes=cnData.map(function(x){return x.cnKey;});
+  showRefThumb();
+  cnOverlay.classList.remove('open');
+  toast('已选择'+cnData.length+'张参考图，ControlNet已分别设置');
+};
+document.getElementById('cnCancel').onclick=function(){
+  cnData=[];cnActive=0;
+  cnOverlay.classList.remove('open');
+  toast('已取消，参考图设置未保存');
+};
+cnOverlay.addEventListener('click',function(e){if(e.target===this){cnData=[];cnActive=0;this.classList.remove('open');}});
+document.getElementById('uploadBtn').onclick=function(){fileInput.click();};
+fileInput.onchange=function(){
+  var files=fileInput.files;if(!files||!files.length)return;
+  var remain=4-cnData.length;
+  var arr=Array.prototype.slice.call(files).slice(0,remain);
+  var loaded=0;
+  arr.forEach(function(f){
+    var reader=new FileReader();
+    reader.onload=function(ev){
+      cnData.push({src:ev.target.result,cnKey:'none'});loaded++;
+      if(loaded===arr.length){
+        if(!cnOverlay.classList.contains('open')){cnActive=0;cnOverlay.classList.add('open');}
+        renderCnThumbs();renderCnSel();updateCnPrev();
+        toast('已上传'+cnData.length+'张参考图，最多4张');
+      }
+    };
+    reader.readAsDataURL(f);
+  });
+  fileInput.value='';
+};
+function cnDescText(){
+  return state.cnTypes.map(function(k){return k==='none'?'直接生图':cnName(k);}).join(' / ');
+}
+function showRefThumb(){
+  var r=document.getElementById('inRef');r.style.display='flex';
+  var html=state.refImages.map(function(src,i){
+    var t=thumbHtml(src);
+    return '<div class="refitem" data-i="'+i+'">'+t+'<span class="refdel" data-rdel="'+i+'">×</span></div>';
+  }).join('');
+  html+='<span>'+(state.cnTypes&&state.cnTypes.length?('ControlNet：'+cnDescText()):('图生图 · '+state.refImages.length+'张参考图'))+'</span><span class="x" id="delRefAll">×</span>';
+  r.innerHTML=html;
+  r.querySelectorAll('[data-rdel]').forEach(function(del){
+    del.onclick=function(){
+      var i=parseInt(del.getAttribute('data-rdel'));
+      state.refImages.splice(i,1);state.cnTypes.splice(i,1);
+      if(!state.refImages.length){r.style.display='none';}
+      else{showRefThumb();}
+      toast('已删除该张参考图');
+    };
+  });
+  document.getElementById('delRefAll').onclick=function(){state.refImages=[];state.cnTypes=[];r.style.display='none';toast('已移除全部参考图');};
+}
+function thumbHtml(src){
+  if(src.indexOf('data:')===0) return '<img src="'+src+'" alt="参考图">';
+  var idx=(typeof src==='string'&&src.indexOf('img')===0)?(parseInt(src.slice(3))||0):0;
+  return '<div style="width:38px;height:38px;border-radius:6px;background:'+PALETTES[idx%PALETTES.length]+';display:flex;align-items:center;justify-content:center;color:#fff;font-size:9px;flex-shrink:0;">原图</div>';
+}
+function upscaleImage(idx,m){
+  var conv=CONVS[state.convId];
+  if(state.generating)return;
+  state.generating=true;document.getElementById('sendBtn').disabled=true;
+  var um={t:'user',text:'对这张图片进行超清放大（MultiDiffusion · R-ESRGAN 4x+ · 重绘0.75）',ref:['img'+(m.images[idx]||0)],time:nowTime()};
+  conv.msgs.push(um);
+  conv.msgs.push({t:'ai',gening:true,text:'正在超清放大…（预计20秒）',time:nowTime()});
+  renderConv();
+  setTimeout(function(){
+    conv.msgs.pop();
+    conv.msgs.push(makeAiMsg({model:m.model,size:'1:1',count:1,sceneName:m.sceneName,note:'超清放大完成：1024×1024 → 2048×2048（MultiDiffusion · R-ESRGAN 4x+）',time:nowTime()}));
+    state.generating=false;document.getElementById('sendBtn').disabled=false;renderConv();
+  },1800);
+  toast('已提交超清放大任务');
+}
+document.getElementById('sendBtn').onclick=function(){fakeGenerate();};
+promptEl.addEventListener('keydown',function(e){if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();fakeGenerate();}});
+
+/* 高级参数设置 · 展开/收起 */
+var advSec=document.getElementById('advSec');
+document.getElementById('advToggle').onclick=function(){advSec.classList.toggle('open');};
+document.getElementById('advClose').onclick=function(e){e.stopPropagation();advSec.classList.remove('open');};
+
+/* 高级参数取值 */
+function advGenDesc(){
+  return '采样器 '+document.getElementById('advSampler').value+' · 步数 '+document.getElementById('advSteps').value+' · CFG '+document.getElementById('advCfg').value+' · 种子 '+document.getElementById('advSeed').value+' · 批次'+document.getElementById('advBatch').value+'×每批'+document.getElementById('advPer').value;
+}
+
+/* 高级参数 · 批次/每批滑块联动数量菜单 */
+function advCount(){
+  var b=parseInt(document.getElementById('advBatch').value,10);
+  var p=parseInt(document.getElementById('advPer').value,10);
+  document.getElementById('advBatchV').textContent=b;
+  document.getElementById('advPerV').textContent=p;
+  var n=b*p;
+  state.count=n;
+  document.getElementById('countVal').textContent=n+'张';
+}
+document.getElementById('advBatch').addEventListener('input',advCount);
+document.getElementById('advPer').addEventListener('input',advCount);
+
+/* 生图记录抽屉（个人AI图库并入对话生图） */
+function openGenLib(){
+  chatWrapEl.classList.add('drawer-open');
+  chatWrapEl.style.paddingRight='334px';
+  genLibBtn.classList.add('on');
+  renderGenLibDrawer();
+}
+function closeGenLib(){
+  chatWrapEl.classList.remove('drawer-open');
+  chatWrapEl.style.paddingRight='';
+  genLibBtn.classList.remove('on');
+}
+function renderGenLibDrawer(){
+  var body=document.getElementById('genLibBody');
+  if(!body)return;
+  body.innerHTML='<div class="genlibbar"><button class="tbtn">刷新</button><button class="tbtn">发布到AI画廊</button><button class="tbtn">发布到设计图库</button><button class="tbtn">批量管理</button></div><div class="genlibtip">共 '+GEN_LIBS.length+' 张生成图 · 含对话生图 / 在线生图 / 超清放大结果</div><div class="genlibgrid" id="genLibGrid2"></div>';
+  var g=document.getElementById('genLibGrid2');
+  g.innerHTML=GEN_LIBS.map(function(t,i){return imgHtml(i,t,'生图记录','official',true);}).join('');
+  g.querySelectorAll('.mcard').forEach(function(c,idx){c.onclick=function(){renderIDetail(GEN_LIBS[idx],'生图记录');showView('idetail');};});
+}
+genLibBtn.onclick=function(){chatWrapEl.classList.contains('drawer-open')?closeGenLib():openGenLib();};
+document.getElementById('genLibClose').onclick=closeGenLib;
+document.getElementById('newConv').onclick=function(){
+  var n='c'+Date.now();CONVS[n]={title:'新对话',msgs:[]};
+  convOrder.unshift(n);state.convId=n;promptEl.value='';
+  renderConvList();renderConv();toast('已新建对话');
+};
+function buildMenu(containerId,items,isActive,onClick){
+  var c=document.getElementById(containerId);c.innerHTML='';
+  items.forEach(function(it){
+    var d=document.createElement('div');
+    d.className='mi'+(isActive(it)?' active':'');
+    var label=typeof it==='string'?it:(typeof it==='number'?(it+'张'):it.name);
+    var sub=(typeof it==='object'&&it.sub)?it.sub:(typeof it==='object'&&it.res?it.res:'');
+    d.innerHTML=label+(sub?'<span class="sub">'+sub+'</span>':'');
+    d.onclick=function(e){e.stopPropagation();onClick(it);closeAllMenus();};
+    c.appendChild(d);
+  });
+}
+function bindMenu(selId,menuId){
+  document.getElementById(selId).querySelector('button').onclick=function(e){
+    e.stopPropagation();
+    var m=document.getElementById(menuId);var w=m.classList.contains('open');
+    closeAllMenus();if(!w)m.classList.add('open');
+  };
+}
+buildMenu('menuModel',MODELS,function(m){return state.model===m.name;},function(m){state.model=m.name;document.getElementById('modelVal').textContent=m.name;toast('已切换模型：'+m.name);});
+buildMenu('menuScene',SCENES,function(s){return state.scene===s.name;},function(s){applyScene(s);});
+buildMenu('menuSize',SIZES,function(s){return state.size===s.name;},function(s){state.size=s.name;document.getElementById('sizeVal').textContent=s.name;});
+buildMenu('menuCount',[1,2,3,4,5],function(c){return state.count===c;},function(c){state.count=c;document.getElementById('countVal').textContent=c+'张';document.getElementById('advPer').value=c;document.getElementById('advBatch').value=1;advCount();});
+bindMenu('selModel','menuModel');bindMenu('selScene','menuScene');bindMenu('selSize','menuSize');bindMenu('selCount','menuCount');
+
+/* ===== LoRA 风格模型弹窗 ===== */
+var LORA_MODELS=[
+  {name:'集装箱堆场LoRA',cat:'集装箱',fav:true,d:'12.3k',official:true},
+  {name:'货运卡车LoRA',cat:'货运卡车',fav:false,d:'8.6k',official:true},
+  {name:'仓储仓库LoRA',cat:'仓储仓库',fav:true,d:'15.2k',official:true},
+  {name:'港口码头LoRA',cat:'港口码头',fav:false,d:'9.4k',official:true},
+  {name:'冷链场景LoRA',cat:'冷链物流',fav:false,d:'6.8k',official:true},
+  {name:'分拣配送LoRA',cat:'分拣配送',fav:true,d:'11.1k',official:true},
+  {name:'质检场景LoRA',cat:'质检场景',fav:false,d:'4.9k',official:true},
+  {name:'叉车设备LoRA',cat:'物流设备',fav:false,d:'3.2k',official:true},
+  {name:'堆高机LoRA',cat:'物流设备',fav:false,d:'2.7k',official:true},
+  {name:'AGV搬运LoRA',cat:'物流设备',fav:true,d:'5.5k',official:true},
+  {name:'龙门吊LoRA',cat:'集装箱',fav:false,d:'4.1k',official:true},
+  {name:'厢式卡车LoRA',cat:'货运卡车',fav:false,d:'3.8k',official:true},
+  {name:'冷库货架LoRA',cat:'冷链物流',fav:false,d:'2.9k',official:true},
+  {name:'仓库自动化LoRA',cat:'仓储仓库',fav:true,d:'7.3k',official:true},
+  {name:'岸桥装卸LoRA',cat:'港口码头',fav:false,d:'3.6k',official:true},
+  {name:'分拣台LoRA',cat:'分拣配送',fav:false,d:'2.4k',official:true},
+  {name:'我的集装箱堆场LoRA',cat:'集装箱',fav:false,d:'1.2k',official:false},
+  {name:'我的冷链仓库LoRA',cat:'冷链物流',fav:false,d:'0.9k',official:false},
+  {name:'我的叉车作业LoRA',cat:'物流设备',fav:false,d:'0.7k',official:false},
+  {name:'我的分拣线LoRA',cat:'分拣配送',fav:false,d:'0.6k',official:false}
+];
+var lorOverlay=document.getElementById('lorOverlay');
+var lorTab='official',lorCat='全部',lorKW='',lorFavOnly=false;
+var lorPalettes=['linear-gradient(135deg,#3B6FE0,#7BA3EE)','linear-gradient(135deg,#1E5A44,#67A98B)','linear-gradient(135deg,#8A6A3E,#C9A87C)','linear-gradient(135deg,#5B4B8A,#9C8FD0)','linear-gradient(135deg,#7A4D00,#C79A4B)','linear-gradient(135deg,#3E5A6B,#7E9BAE)'];
+function renderLorGrid(){
+  var grid=document.getElementById('lorGrid');
+  var list=LORA_MODELS.filter(function(m){
+    if(lorTab==='official'&&!m.official)return false;
+    if(lorTab==='mine'&&m.official)return false;
+    if(lorTab==='official'&&lorFavOnly&&!m.fav)return false;
+    if(lorCat!=='全部'&&m.cat!==lorCat)return false;
+    if(lorKW&&m.name.indexOf(lorKW)<0)return false;
+    return true;
+  });
+  if(!list.length){grid.innerHTML='<div style="grid-column:1/-1;text-align:center;color:var(--sub);padding:30px;font-size:12px;">暂无匹配的LoRA模型</div>';return;}
+  grid.innerHTML=list.map(function(m,i){
+    var run=(m.d.slice(0,-1)*7+30).toFixed(0)+'k';
+    var corner=m.official?'<span class="corner-tag official">官方</span>':'<span class="corner-tag mine">我的</span>';
+    return '<div class="lorcard" data-name="'+m.name+'"><div class="ph" style="background:'+lorPalettes[i%lorPalettes.length]+'">'+corner+'<span>'+m.name.slice(0,4)+'</span></div><div class="chk-tag">✓</div><div class="body"><div class="n">'+m.name+'</div><div class="d"><span>LoRA · '+m.cat+'</span></div><div class="d"><span>▶'+run+'</span><span>↓'+m.d+'</span></div></div></div>';
+  }).join('');
+  grid.querySelectorAll('.lorcard').forEach(function(c){
+    if(c.getAttribute('data-name')===state.lora)c.classList.add('selected');
+    c.onclick=function(){
+      grid.querySelectorAll('.lorcard').forEach(function(x){x.classList.remove('selected');});
+      c.classList.add('selected');
+      state.lora=c.getAttribute('data-name');
+      document.getElementById('loraVal').textContent=state.lora;
+      lorOverlay.classList.remove('open');
+      toast('已选择LoRA风格模型：'+state.lora);
+    };
+  });
+}
+document.getElementById('selLora').querySelector('button').onclick=function(){lorOverlay.classList.add('open');renderLorGrid();};
+document.getElementById('lorClose').onclick=function(){lorOverlay.classList.remove('open');};
+lorOverlay.addEventListener('click',function(e){if(e.target===this)this.classList.remove('open');});
+document.querySelectorAll('.lortabs button').forEach(function(b){
+  b.onclick=function(){document.querySelectorAll('.lortabs button').forEach(function(x){x.classList.remove('active');});b.classList.add('active');lorTab=b.getAttribute('data-ltab');renderLorGrid();};
+});
+document.querySelectorAll('.lorcats button').forEach(function(b){
+  b.onclick=function(){document.querySelectorAll('.lorcats button').forEach(function(x){x.classList.remove('active');});b.classList.add('active');lorCat=b.textContent;renderLorGrid();};
+});
+document.querySelector('.lorsearch input').addEventListener('input',function(e){lorKW=e.target.value.trim();renderLorGrid();});
+document.getElementById('lorFavOnly').addEventListener('change',function(e){lorFavOnly=e.target.checked;renderLorGrid();});
+document.addEventListener('click',function(e){
+  if(!e.target.closest('.sel')&&!e.target.closest('.imenu')&&!e.target.closest('.more'))closeAllMenus();
+});
+
+/* ===== 发送按钮置灰 ===== */
+var sendBtn=document.getElementById('sendBtn');
+function syncSendBtn(){sendBtn.disabled=state.generating||!promptEl.value.trim();}
+promptEl.addEventListener('input',syncSendBtn);
+syncSendBtn();
+/* 场景模板填入后同步发送按钮状态（renderEmpty中sug绑定在渲染时，此处补一个统一入口） */
+var _origApply=applyScene;
+applyScene=function(s){_origApply(s);syncSendBtn();};
+
+/* ===== 中英互译（原型模拟词典） ===== */
+var TRANS_DICT={
+  '生成一张':'Generate ','一张':'a ','港口':'port ','集装箱':'container ','堆场':'yard ','黄昏':'dusk ','光线':'light ',
+  '快递分拣中心':'express sorting center ','分拣中心':'sorting center ','分拣':'sorting ','传送带':'conveyor belt ','快速':'fast ',
+  '冷链冷库':'cold storage warehouse ','冷链':'cold chain ','冷库':'cold storage ','内部':'interior ','货架':'shelves ','整齐':'tidy ',
+  '一辆正在装货的集装箱卡车':'a container truck loading ','一辆':'a ','正在装货':'loading ','装货':'loading ','卡车':'truck ','傍晚':'evening ',
+  '自动化仓库':'automated warehouse ','仓库':'warehouse ','自动化':'automated ','龙门吊':'gantry crane ','装卸':'handling ',
+  '物流':'logistics ','质检':'QC ','工作台':'workbench ','叉车':'forklift ','堆高机':'stacker ','无人机':'drone ','设备':'equipment ',
+  '特写':'close-up ','写实':'photorealistic ','明亮':'bright ','照明':'lighting ','航拍':'aerial view ','全景':'panorama ',
+  '夜景':'night view ','清晨':'dawn '
+};
+var EN_TRANS={
+  'conveyor belt':'传送带','gantry crane':'龙门吊','sorting center':'分拣中心','cold storage':'冷库','cold chain':'冷链',
+  'express':'快递','sorting':'分拣','container':'集装箱','truck':'卡车','warehouse':'仓库','automated':'自动化','forklift':'叉车',
+  'stacker':'堆高机','drone':'无人机','dusk':'黄昏','dawn':'清晨','evening':'傍晚','night':'夜景','interior':'内部','shelves':'货架',
+  'tidy':'整齐','loading':'装货','yard':'堆场','port':'港口','logistics':'物流','qc':'质检','workbench':'工作台','equipment':'设备',
+  'close-up':'特写','photorealistic':'写实','bright':'明亮','lighting':'照明','aerial':'航拍','panorama':'全景','light':'光线',
+  'fast':'快速','generate':'生成','scene':'场景','photorealistic':'写实','a':'一张'
+};
+function zh2en(txt){
+  Object.keys(TRANS_DICT).sort(function(a,b){return b.length-a.length;}).forEach(function(k){txt=txt.split(k).join(TRANS_DICT[k]);});
+  return txt.replace(/\s+/g,' ').trim();
+}
+function en2zh(txt){
+  var t=txt.toLowerCase();
+  Object.keys(EN_TRANS).sort(function(a,b){return b.length-a.length;}).forEach(function(k){t=t.split(k).join(EN_TRANS[k]);});
+  return t;
+}
+document.getElementById('translateBtn').onclick=function(){
+  var txt=promptEl.value.trim();
+  if(!txt){toast('请先在输入框输入内容，再点击翻译');return;}
+  var out=/[\u4e00-\u9fa5]/.test(txt)?zh2en(txt):en2zh(txt);
+  promptEl.value=out;syncSendBtn();promptEl.focus();
+  toast(/[\u4e00-\u9fa5]/.test(txt)?'已翻译为英文':'已翻译为中文');
+};
+
+/* ===== 顶部搜索下拉 ===== */
+var topSelBtn=document.getElementById('topSelBtn');
+var topSelDD=document.getElementById('topSelDD');
+topSelBtn.addEventListener('click',function(e){e.stopPropagation();var w=topSelDD.classList.contains('open');closeAllDD();if(!w)topSelDD.classList.add('open');});
+topSelDD.querySelectorAll('.mi').forEach(function(mi){
+  mi.addEventListener('click',function(){
+    document.getElementById('topSelLabel').textContent=mi.getAttribute('data-tsel');
+    document.getElementById('topSearchInput').placeholder='搜索'+mi.getAttribute('data-tsel');
+    closeAllDD();
+  });
+});
+document.getElementById('topSearchGo').addEventListener('click',function(){
+  var kw=document.getElementById('topSearchInput').value.trim();
+  var scope=document.getElementById('topSelLabel').textContent;
+  if(!kw){toast('请输入要搜索的关键词');return;}
+  toast('原型演示：在「'+scope+'」中搜索「'+kw+'」');
+});
+document.getElementById('topSearchInput').addEventListener('keydown',function(e){if(e.key==='Enter')document.getElementById('topSearchGo').click();});
+
+/* ===== 训练管理（记录清单 + 详情） ===== */
+var TRANS=[
+  {id:'01KYPDEVXZ3M9R6E6XXK5SFNQ6',time:'2026-07-29 15:47',size:'158.00MB',title:'集装箱堆场LoRA'},
+  {id:'01KYNY341Z5WTZGMKS1DY5KYGH',time:'2026-07-29 11:18',size:'158.00MB',title:'货运卡车LoRA'},
+  {id:'01KT610E7MKACW8JH56V91JTT2',time:'2026-06-03 13:58',size:'158.00MB',title:'仓储仓库LoRA'},
+  {id:'01KT602HJMZWBQZ302WHHK85JW',time:'2026-06-03 13:42',size:'158.00MB',title:'港口码头LoRA'},
+  {id:'01KAX55C3ZQWD16AZ19W85RX22',time:'2025-11-25 17:22',size:'158.00MB',title:'冷链场景LoRA'},
+  {id:'01K8PW8NDA82Q5WVM99FGVBAKS',time:'2025-10-29 10:20',size:'158.00MB',title:'分拣配送LoRA'},
+  {id:'01K604XYEDHNJR7XX64KQEWCYP',time:'2025-09-25 17:58',size:'0MB',title:'质检场景LoRA'},
+  {id:'01K5JAZQ68K7M762PZQKP3BVKC',time:'2025-09-20 09:14',size:'158.00MB',title:'叉车设备LoRA'}
+];
+var transPalettes=['linear-gradient(135deg,#3B6FE0,#7BA3EE)','linear-gradient(135deg,#1E5A44,#67A98B)','linear-gradient(135deg,#8A6A3E,#C9A87C)','linear-gradient(135deg,#5B4B8A,#9C8FD0)','linear-gradient(135deg,#7A4D00,#C79A4B)','linear-gradient(135deg,#3E5A6B,#7E9BAE)'];
+function renderTransGrid(){
+  var g=document.getElementById('transGrid');
+  document.getElementById('transCount').textContent=TRANS.length;
+  g.innerHTML=TRANS.map(function(t,i){
+    return '<div class="transcard" data-id="'+i+'"><div class="tph" style="background:'+transPalettes[i%transPalettes.length]+'"><span>'+t.title+'</span><span class="tag-ok">训练完成</span></div><div class="tbody"><div class="tn">'+t.title+'</div><div class="tt"><span>'+t.time+'</span><span>'+t.size+'</span></div><div class="tt" style="margin-top:2px;">'+t.id+'</div></div></div>';
+  }).join('');
+  g.querySelectorAll('.transcard').forEach(function(c){
+    c.onclick=function(){renderTrainDetail(parseInt(c.getAttribute('data-id')));showView('traindetail');};
+  });
+}
+function renderTrainDetail(i){
+  var t=TRANS[i];
+  var g=document.getElementById('detailSamples');
+  var html='';
+  for(var k=0;k<5;k++){
+    html+='<div class="tcard"><div class="tph" style="background:'+transPalettes[(i+k)%transPalettes.length]+'"><span>样图'+(k+1)+'</span></div><div class="tbody"><div class="tn">样图'+(k+1)+'</div><div class="ts">32.00MB</div></div></div>';
+  }
+  g.innerHTML=html;
+  var ttl=document.querySelector('#view-traindetail .page-title');
+  if(ttl)ttl.textContent='训练记录详情 · '+t.title;
+  /* 重置右侧tab为训练参数 */
+  document.querySelectorAll('#view-traindetail .tabs2 button').forEach(function(b){b.classList.toggle('active',b.getAttribute('data-ttab')==='param');});
+  document.getElementById('ttabParam').style.display='';
+  document.getElementById('ttabLog').style.display='none';
+}
+document.querySelectorAll('#view-traindetail .tabs2 button').forEach(function(b){
+  b.addEventListener('click',function(){
+    document.querySelectorAll('#view-traindetail .tabs2 button').forEach(function(x){x.classList.remove('active');});
+    b.classList.add('active');
+    document.getElementById('ttabParam').style.display=b.getAttribute('data-ttab')==='param'?'':'none';
+    document.getElementById('ttabLog').style.display=b.getAttribute('data-ttab')==='log'?'':'none';
+  });
+});
+document.getElementById('backTrain').addEventListener('click',function(){showView('trainlist');});
+document.getElementById('dlSamples').addEventListener('click',function(){toast('原型演示：已开始下载 5 个阶段 LoRA 模型文件');});
+document.querySelectorAll('#view-traindetail .actrow .tb-btn').forEach(function(b){
+  b.addEventListener('click',function(){
+    var txt=b.textContent.trim();
+    if(txt==='重新训练'){
+      if(!trainImgs.length){seedTrainImgs(6);}
+      showView('train');
+      trainSetStep(2);
+      toast('已复用本次训练图片集，进入设置参数');
+    }else{
+      trainImgs=[];
+      renderTrainThumbs();
+      TRAIN_PICKED=null;
+      document.getElementById('baseModelBox').innerHTML='<div class="bm-empty">选择模型</div>';
+      showView('train');
+      trainSetStep(1);
+      toast('已新建训练任务，从数据准备开始');
+    }
+  });
+});
+renderTransGrid();
+
+/* ===== Lora训练 三步向导 ===== */
+var TRAIN_MODELS=[
+  ['Qwen-Image 底模','Qwen-Image','文字渲染强',PALETTES[0],'↓0 ▶321 ⊙0 🔥0'],
+  ['Flux.2 klein 底模','Flux.2','写实标杆',PALETTES[1],'↓0 ▶162 ⊙0 🔥0'],
+  ['SDXL 1.0 底模','SDXL 1.0','生态最大',PALETTES[2],'↓9 ▶6143 ⊙5 🔥0'],
+  ['Flux.1 schnell 底模','Flux.1','快速出图',PALETTES[3],'↓0 ▶476 ⊙0 🔥0'],
+  ['写实摄影底模','SDXL 1.0','真实光影',PALETTES[4],'↓3 ▶1280 ⊙1 🔥0'],
+  ['高清人像底模','Flux.1','人像细节',PALETTES[5],'↓1 ▶956 ⊙0 🔥0'],
+  ['建筑空间底模','SD 1.5','场景透视',PALETTES[0],'↓2 ▶742 ⊙0 🔥0'],
+  ['极速出图底模','SD 1.5','低显存快出',PALETTES[2],'↓5 ▶2210 ⊙3 🔥0']
+];
+var TRAIN_MINE=[
+  ['我的仓储仓库底模','SDXL 1.0','自行上传',PALETTES[3],'↓0 ▶12 ⊙0 🔥0'],
+  ['我的集装箱底模','Flux.2','自行上传',PALETTES[4],'↓0 ▶8 ⊙0 🔥0']
+];
+var smTab='official';
+var TRAIN_PICKED=null;
+function renderSmGrid(){
+  var data=smTab==='official'?TRAIN_MODELS:TRAIN_MINE;
+  document.getElementById('smGrid').innerHTML=data.map(function(m,i){
+    var corner=smTab==='official'?'<span class="corner-tag official">官方</span>':'<span class="corner-tag mine">我的</span>';
+    return '<div class="sm-card">'+
+      '<div class="sw" style="background:'+m[3]+';">'+corner+'<span class="smt">CheckPoint</span><span class="smv">'+m[1]+'</span></div>'+
+      '<div class="smn">'+m[0]+'</div>'+
+      '<div class="smd">'+m[2]+'</div>'+
+      '<div class="smops"><span class="op" data-smact="view" data-idx="'+i+'">查看</span><span class="op orange" data-smact="pick" data-idx="'+i+'">选择</span><span class="op gray" data-smact="rm" data-idx="'+i+'">移除模型库</span></div>'+
+    '</div>';
+  }).join('');
+  document.querySelectorAll('#smGrid [data-smact]').forEach(function(op){
+    op.onclick=function(e){
+      e.stopPropagation();
+      var i=+op.getAttribute('data-idx'),act=op.getAttribute('data-smact');
+      if(act==='pick'){
+        TRAIN_PICKED=data[i];
+        document.getElementById('baseModelBox').innerHTML='<div class="bm-pick"><div class="sw" style="background:'+TRAIN_PICKED[3]+';"></div><div><div class="bn">'+TRAIN_PICKED[0]+'</div><div class="bt">CheckPoint · '+TRAIN_PICKED[1]+' · '+TRAIN_PICKED[2]+'</div></div></div>';
+        document.getElementById('smModal').classList.remove('open');
+        toast('已选择基础模型：'+TRAIN_PICKED[0]);
+      }else if(act==='rm'){
+        toast('原型演示：已从模型库移除');
+      }else{
+        toast('原型演示：查看模型详情');
+      }
+    };
+  });
+}
+document.getElementById('baseModelBox').onclick=function(){
+  renderSmGrid();
+  document.getElementById('smModal').classList.add('open');
+};
+document.getElementById('smClose').onclick=function(){document.getElementById('smModal').classList.remove('open');};
+document.querySelectorAll('.sm-bar button[data-smtab]').forEach(function(b){
+  b.onclick=function(){
+    document.querySelectorAll('.sm-bar button[data-smtab]').forEach(function(x){x.classList.remove('active');x.classList.remove('orange');});
+    b.classList.add('active');b.classList.add('orange');
+    smTab=b.getAttribute('data-smtab');renderSmGrid();
+  };
+});
+document.getElementById('smModal').addEventListener('click',function(e){if(e.target===this)this.classList.remove('open');});
+function trainSetStep(n){
+  document.getElementById('ts1').classList.toggle('active',n===1);
+  document.getElementById('ts2').classList.toggle('active',n===2);
+  document.getElementById('ts3').classList.toggle('active',n===3);
+  document.getElementById('trainStep1').style.display=n===1?'':'none';
+  document.getElementById('trainStep2').style.display=n===2?'':'none';
+  document.getElementById('trainStep3').style.display=n===3?'':'none';
+}
+document.getElementById('trainNext1').onclick=function(){trainSetStep(2);};
+document.getElementById('trainBack1').onclick=function(){trainSetStep(1);};
+document.getElementById('trainReset').onclick=function(){toast('原型演示：已重置所有配置');};
+
+/* ===== 训练数据准备：上传图片 + 打标 ===== */
+var trainImgs=[];
+var TAG_POOL=[['集装箱','港口'],['仓库','货架'],['卡车','运输'],['分拣','流水线'],['冷链','冷库'],['叉车','作业'],['无人机','配送'],['质检','工作台']];
+function renderTrainThumbs(){
+  var g=document.getElementById('trainThumbs');
+  if(!trainImgs.length){g.innerHTML='';}
+  else{
+    g.innerHTML=trainImgs.map(function(im,i){
+      return '<div class="tthumb"><div class="tthumb-img" style="background-image:url('+im.url+');"></div><div class="tthumb-tags">'+(im.tags.length?im.tags.map(function(t){return '<span>'+t+'</span>';}).join(''):'<span style="background:#F2F3F5;color:#9AA4B2;">未打标</span>')+'</div><span class="tthumb-x" data-i="'+i+'">×</span></div>';
+    }).join('');
+    document.querySelectorAll('#trainThumbs .tthumb-x').forEach(function(x){
+      x.onclick=function(){trainImgs.splice(+x.getAttribute('data-i'),1);renderTrainThumbs();};
+    });
+  }
+  document.getElementById('trainUpCount').textContent='已上传：'+trainImgs.length+'张';
+}
+function seedTrainImgs(n){
+  if(trainImgs.length)return;
+  var cols=['#3B6FE0','#1E5A44','#8A6A3E','#5B4B8A','#7A4D00','#3E5A6B'];
+  var tags=[['集装箱','港口'],['仓库','货架'],['卡车','运输'],['分拣','流水线'],['冷链','冷库'],['叉车','作业']];
+  for(var i=0;i<n;i++){
+    trainImgs.push({url:'data:image/svg+xml;utf8,'+encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" width="120" height="120"><rect width="120" height="120" fill="'+cols[i%cols.length]+'"/><text x="10" y="62" font-size="15" fill="#fff">物流图'+(i+1)+'</text></svg>'),tags:tags[i%tags.length].slice()});
+  }
+  renderTrainThumbs();
+}
+document.getElementById('dropZone').onclick=function(){document.getElementById('imgFile').click();};
+document.getElementById('addImgBtn').onclick=function(){document.getElementById('imgFile').click();};
+document.getElementById('imgFile').onchange=function(){
+  Array.prototype.forEach.call(this.files,function(f){
+    trainImgs.push({url:URL.createObjectURL(f),tags:[]});
+  });
+  this.value='';
+  renderTrainThumbs();
+  toast('已上传 '+trainImgs.length+' 张图片');
+};
+document.getElementById('clearImgBtn').onclick=function(){
+  if(!trainImgs.length){toast('暂无可清空的图片');return;}
+  trainImgs=[];
+  renderTrainThumbs();
+  toast('已清空全部图片');
+};
+document.getElementById('autoTagBtn').onclick=function(){
+  if(!trainImgs.length){toast('请先上传图片');return;}
+  trainImgs.forEach(function(im,i){im.tags=TAG_POOL[i%TAG_POOL.length].slice();});
+  renderTrainThumbs();
+  toast('已为 '+trainImgs.length+' 张图片自动打标');
+};
+document.getElementById('editTagBtn').onclick=function(){
+  if(!trainImgs.length){toast('请先上传图片');return;}
+  var tagModal=document.createElement('div');
+  tagModal.className='modal open';
+  tagModal.style.zIndex='300';
+  tagModal.innerHTML='<div class="mcard-modal" style="width:420px;"><div class="lmhead"><h3>批量增删标签</h3><button class="tgX">×</button></div><div style="font-size:12px;color:var(--sub);margin-bottom:8px;">输入标签（多个用英文逗号分隔），可统一追加到全部图片</div><input id="tgInput" style="width:100%;box-sizing:border-box;border:1px solid var(--line);border-radius:8px;padding:8px 12px;font-size:13px;margin-bottom:10px;" placeholder="如：集装箱, 港口, 白天"><div class="pubfoot" style="margin-top:0;"><button class="tb-btn" id="tgCancel">取消</button><button class="tb-btn primary" id="tgApply">应用</button></div></div>';
+  document.body.appendChild(tagModal);
+  var close=function(){tagModal.remove();};
+  tagModal.querySelector('.tgX').onclick=close;
+  tagModal.querySelector('#tgCancel').onclick=close;
+  tagModal.querySelector('#tgApply').onclick=function(){
+    var v=tagModal.querySelector('#tgInput').value.trim();
+    if(v){
+      var tags=v.split(/[,，]/).map(function(t){return t.trim();}).filter(Boolean);
+      trainImgs.forEach(function(im){im.tags=im.tags.concat(tags);});
+      renderTrainThumbs();
+      toast('已为全部图片追加 '+tags.length+' 个标签');
+    }
+    close();
+  };
+};
+document.getElementById('trainStart').onclick=function(){
+  if(!TRAIN_PICKED){toast('请先选择基础模型');return;}
+  trainSetStep(3);
+  var step=0;
+  document.getElementById('tpTitle').textContent='训练中';
+  document.getElementById('tpLeftTitle').textContent='模型训练中...';
+  document.getElementById('tpNum').textContent='训练中: 0 / 10';
+  document.getElementById('tpFill').style.width='0%';
+  document.getElementById('tpsamples').innerHTML='';
+  document.getElementById('liveSample').innerHTML='训练中...请稍后';
+  document.getElementById('trCancel').style.display='';
+  document.getElementById('liveWrap').style.display='';
+  document.getElementById('doneWrap').style.display='none';
+  var T=setInterval(function(){
+    step++;
+    document.getElementById('tpFill').style.width=(step*10)+'%';
+    document.getElementById('tpNum').textContent='训练中: '+step+' / 10';
+    if(step%2===0){
+      var sidx=step/2;
+      var p=PALETTES[[0,2,4,1,3][sidx-1]];
+      var div=document.createElement('div');
+      div.className='tpsample';
+      div.innerHTML='<div class="sw" style="background:'+p+';"></div><input type="checkbox" class="chk"><div class="nm"><span class="snm">阶段'+sidx+' · 训练中</span><span class="dl">下载</span></div>';
+      document.getElementById('tpsamples').appendChild(div);
+      document.getElementById('liveSample').innerHTML='<div style="width:100%;border-radius:8px;aspect-ratio:4/3;background:'+p+';display:flex;align-items:center;justify-content:center;color:#fff;font-size:12px;">最新样图 · 阶段'+sidx+'</div>';
+    }
+    if(step>=10){
+      clearInterval(T);
+      document.getElementById('tpTitle').textContent='训练完成';
+      document.getElementById('tpLeftTitle').textContent='训练完成';
+      document.getElementById('tpNum').textContent='训练完成: 10 / 10';
+      document.getElementById('trCancel').style.display='none';
+      document.querySelectorAll('#tpsamples .snm').forEach(function(s){
+        s.textContent=s.textContent.replace('训练中','32.00MB');
+      });
+      document.getElementById('liveWrap').style.display='none';
+      document.getElementById('doneWrap').style.display='';
+      document.getElementById('doneBase').textContent=(TRAIN_PICKED&&TRAIN_PICKED[0])?TRAIN_PICKED[0]:'—';
+      document.getElementById('doneCount').textContent=(trainImgs?trainImgs.length:0)+' 张';
+      toast('训练完成，共生成 5 个阶段模型');
+    }
+  },900);
+};
+document.getElementById('trRetrain').onclick=function(){
+  if(!trainImgs.length){seedTrainImgs(6);}
+  trainSetStep(2);
+  toast('已复用本次训练图片集，进入设置参数');
+};
+document.getElementById('trNew').onclick=function(){
+  trainImgs=[];
+  renderTrainThumbs();
+  trainSetStep(1);
+  TRAIN_PICKED=null;
+  document.getElementById('baseModelBox').innerHTML='<div class="bm-empty">选择模型</div>';
+  toast('已新建训练任务，从数据准备开始');
+};
+document.getElementById('trCancel').onclick=function(){toast('原型演示：训练已取消');trainSetStep(2);};
+function updateTpSel(){
+  var n=document.querySelectorAll('#tpsamples .chk:checked').length;
+  document.getElementById('tpSel').textContent='已选中'+n;
+}
+document.getElementById('tpCheckAll').onchange=function(){
+  document.querySelectorAll('#tpsamples .chk').forEach(function(c){c.checked=document.getElementById('tpCheckAll').checked;});
+  updateTpSel();
+};
+document.getElementById('tpsamples').addEventListener('change',function(e){if(e.target.classList&&e.target.classList.contains('chk'))updateTpSel();});
+document.getElementById('tpDownload').onclick=function(){toast('原型演示：已开始下载 5 个阶段 LoRA 模型文件');};
+document.querySelectorAll('#doneWrap .tabs2 button').forEach(function(b){
+  b.onclick=function(){
+    document.querySelectorAll('#doneWrap .tabs2 button').forEach(function(x){x.classList.remove('active');});
+    b.classList.add('active');
+    document.getElementById('dtabIntro').style.display=b.getAttribute('data-dtab')==='intro'?'':'none';
+    document.getElementById('dtabLog').style.display=b.getAttribute('data-dtab')==='log'?'':'none';
+  };
+});
+
+/* ===== 在线生图 4 Tab ===== */
+var GEN_LIBS=['港口码头黄昏','仓库内部全景','集装箱堆场','冷链冷库','质检工作台','运输车队','分拣航拍','堆场全景'];
+function renderGenLib(){
+  document.getElementById('genLibGrid').innerHTML=GEN_LIBS.map(function(t,i){return imgHtml(i,t,'个人AI图库');}).join('');
+  document.querySelectorAll('#genLibGrid .mcard').forEach(function(c,idx){c.onclick=function(){renderIDetail(GEN_LIBS[idx],'个人AI图库');showView('idetail');};});
+}
+document.querySelectorAll('#view-generate .gtabs button').forEach(function(b){
+  b.onclick=function(){
+    document.querySelectorAll('#view-generate .gtabs button').forEach(function(x){x.classList.remove('active');});
+    b.classList.add('active');
+    var t=b.getAttribute('data-gtab');
+    document.querySelectorAll('#view-generate .gpanel').forEach(function(p){p.classList.remove('active');});
+    document.getElementById('gp-'+t).classList.add('active');
+    document.getElementById('view-generate').classList.toggle('libmode',t==='lib');
+    if(t==='lib'){renderGenLib();}
+  };
+});
+
+/* ===== 快捷提示词（下拉） + 模拟生图 ===== */
+document.querySelectorAll('#view-generate .ptip2-hd').forEach(function(hd){
+  hd.onclick=function(){hd.parentElement.classList.toggle('open');};
+});
+document.querySelectorAll('#view-generate .ptip2-words').forEach(function(w){
+  w.querySelectorAll('button').forEach(function(b){
+    b.onclick=function(){
+      var panel=w.closest('.gpanel');
+      var box=w.getAttribute('data-box');
+      var pbs=panel.querySelectorAll('.promptbox');
+      var ta=(box==='pos'?pbs[0]:pbs[1]).querySelector('textarea');
+      var word=b.getAttribute('data-ptip');
+      ta.value=ta.value&&ta.value.trim()?(ta.value.trim()+', '+word):word;
+      ta.focus();
+    };
+  });
+});
+function simulateGen(){
+  var prev=document.getElementById('genPrev');
+  var pal=PALETTES[Math.floor(Math.random()*PALETTES.length)];
+  prev.innerHTML='<div style="color:#B7BFCC;font-size:13px;">生成中...</div>';
+  setTimeout(function(){
+    prev.innerHTML='<div style="position:absolute;inset:0;border-radius:10px;background:'+pal+';display:flex;align-items:center;justify-content:center;color:#fff;font-size:14px;flex-direction:column;gap:6px;font-weight:600;"><span>AI生成</span><span style="font-size:11px;opacity:.85;font-weight:400;">物流场景 · 样例图</span></div>';
+  },1600);
+}
+document.getElementById('genRun').onclick=simulateGen;
+
+/* ===== 发布页类别下拉 ===== */
+var PUB_CATS=['仓储仓库','货运卡车','集装箱','港口码头','冷链物流','分拣配送','质检场景','物流设备'];
+function bindPubSel(selId,valId,ddId,opts){
+  document.getElementById(ddId).innerHTML=opts.map(function(c){return '<div class="mi">'+c+'</div>';}).join('');
+  document.getElementById(selId).onclick=function(e){e.stopPropagation();var m=document.getElementById(ddId);var w=m.classList.contains('open');closeAllMenus();if(!w)m.classList.add('open');};
+  document.getElementById(ddId).querySelectorAll('.mi').forEach(function(mi){mi.onclick=function(e){e.stopPropagation();document.getElementById(valId).textContent=mi.textContent;closeAllMenus();};});
+}
+bindPubSel('catSel1','catVal1','catDD1',PUB_CATS);
+bindPubSel('catSel2','catVal2','catDD2',PUB_CATS);
+bindPubSel('catSel3','catVal3','catDD3',PUB_CATS);
+bindPubSel('catSel4','catVal4','catDD4',PUB_CATS);
+document.getElementById('pubGo1').onclick=function(){toast('AI图片已上传到我的发布（仅自己可见）');showView('mine');renderMine('img','');};
+document.getElementById('pubGo2').onclick=function(){toast('设计图片已上传到我的发布（仅自己可见）');showView('mine');renderMine('lib','');};
+document.getElementById('pubGo3').onclick=function(){toast('模型已上传到我的发布（仅自己可见）');showView('mine');renderMine('model','');};
+document.getElementById('pubGo4').onclick=function(){toast('原型演示：进入下一步「添加版本」');};
+document.getElementById('backPub1').onclick=function(){showView('home');};
+document.getElementById('backPub2').onclick=function(){showView('home');};
+document.getElementById('backPub3').onclick=function(){showView('home');};
+document.getElementById('backPub4').onclick=function(){showView('home');};
+
+/* ===== 我的 / 我的收藏 ===== */
+var SCENE_CATS=['仓储仓库','货运卡车','集装箱','港口码头','冷链物流','分拣配送','质检场景','物流设备'];
+var MINE_MODELS=[
+  ['仓储仓库底模','CheckPoint','SDXL 1.0','↓37 ▶12','仓储仓库'],
+  ['仓储货架底模','CheckPoint','Flux.1 D','↓22 ▶8','仓储仓库'],
+  ['港口码头LoRA','LoRA','Flux.1 D','↓26 ▶4','港口码头'],
+  ['集装箱堆场LoRA','LoRA','Flux.1 D','↓31 ▶6','集装箱'],
+  ['冷链仓库LoRA','LoRA','Flux.1 D','↓19 ▶1','冷链物流'],
+  ['质检场景LoRA','LoRA','SDXL 1.0','↓21 ▶3','质检场景'],
+  ['分拣配送LoRA','LoRA','SDXL 1.0','↓24 ▶5','分拣配送'],
+  ['叉车作业LoRA','LoRA','Flux.1 D','↓16 ▶2','物流设备'],
+  ['货运卡车LoRA','LoRA','Flux.1 D','↓28 ▶6','货运卡车']
+];
+var MINE_IMGS=[
+  ['港口码头黄昏','港口码头'],['仓库内部全景','仓储仓库'],['集装箱堆场','集装箱'],['冷链冷库','冷链物流'],
+  ['分拣流水线','分拣配送'],['质检工作台','质检场景'],['厢式货车','货运卡车'],['AGV搬运作业','物流设备']
+];
+var MINE_LIBS=[
+  ['物流场景模板库','仓储仓库'],['集装箱素材','集装箱'],['仓储货架素材','仓储仓库'],['分拣流水线素材','分拣配送'],
+  ['冷链冷库素材','冷链物流'],['港口码头素材','港口码头']
+];
+var MINE_WFS=[
+  ['物流生图工作流','仓储仓库'],['仓库场景工作流','仓储仓库'],['集装箱调色工作流','集装箱'],['分拣动效工作流','分拣配送'],
+  ['冷链打光工作流','冷链物流'],['港口航拍工作流','港口码头']
+];
+var mineType='';
+function renderMine(cat,type){
+  if(arguments.length>1)mineType=type||'';
+  document.querySelectorAll('#view-mine .mside-item').forEach(function(x){x.classList.toggle('active',x.getAttribute('data-mcat')===cat);});
+  var titles={model:'我的发布 · 模型',img:'我的发布 · AI图片',lib:'我的发布 · 图库',wf:'我的发布 · 工作流'};
+  document.getElementById('mineTitle').textContent=titles[cat];
+  var f=document.getElementById('mineFilter');
+  f.innerHTML=(['全部'].concat(SCENE_CATS)).map(function(c){
+    return '<button class="'+(c===mineType?'on':'')+'" data-ft="'+c+'">'+c+'</button>';
+  }).join('');
+  f.querySelectorAll('button').forEach(function(b){
+    b.onclick=function(){renderMine(cat,b.getAttribute('data-ft'));};
+  });
+  var g=document.getElementById('mineGrid');
+  var arr=cat==='model'?MINE_MODELS:(cat==='img'?MINE_IMGS:(cat==='lib'?MINE_LIBS:MINE_WFS));
+  if(mineType)arr=arr.filter(function(x){return x[x.length-1]===mineType;});
+  if(cat==='model'){g.innerHTML=arr.map(function(m,i){return mcardHtml(i,m[0],m[1],m[2],m[3],'mine');}).join('');g.querySelectorAll('.mcard').forEach(function(c,idx){c.onclick=function(){renderMDetail(arr[idx][0],arr[idx][1],arr[idx][2]);showView('mdetail');};});}
+  else if(cat==='wf'){g.innerHTML=arr.map(function(t,i){return mcardHtml(i,t[0],'Workflow','本平台','▶0','mine');}).join('');g.querySelectorAll('.mcard').forEach(function(c,idx){c.onclick=function(){renderWfDetail(arr[idx][0]);showView('wfdetail');};});}
+  else{g.innerHTML=arr.map(function(t,i){return imgHtml(i,t[0],cat==='img'?'我的AI图片':'我的图库','mine');}).join('');g.querySelectorAll('.mcard').forEach(function(c,idx){c.onclick=function(){renderIDetail(arr[idx][0],cat==='img'?'AI画廊':'设计图库');showView('idetail');};});}
+}
+function renderFav(cat){
+  document.querySelectorAll('#view-fav .mside-item').forEach(function(x){x.classList.toggle('active',x.getAttribute('data-mcat')===cat);});
+  var titles={model:'收藏的模型',img:'收藏的AI图片',lib:'收藏的图库',wf:'收藏的工作流'};
+  document.getElementById('favTitle').textContent=titles[cat];
+  var g=document.getElementById('favGrid');
+  if(cat==='model'){g.innerHTML=MINE_MODELS.map(function(m,i){return mcardHtml(i,m[0],m[1],m[2],m[3]);}).join('');g.querySelectorAll('.mcard').forEach(function(c,idx){c.onclick=function(){renderMDetail(MINE_MODELS[idx][0],MINE_MODELS[idx][1],MINE_MODELS[idx][2]);showView('mdetail');};});}
+  else if(cat==='wf'){g.innerHTML=MINE_WFS.map(function(t,i){return mcardHtml(i,t[0],'Workflow','本平台','▶0');}).join('');g.querySelectorAll('.mcard').forEach(function(c,idx){c.onclick=function(){renderWfDetail(MINE_WFS[idx][0]);showView('wfdetail');};});}
+  else{g.innerHTML=(cat==='img'?MINE_IMGS:MINE_LIBS).map(function(t,i){return imgHtml(i,t[0],cat==='img'?'收藏的AI图片':'收藏的图库');}).join('');g.querySelectorAll('.mcard').forEach(function(c,idx){c.onclick=function(){renderIDetail((cat==='img'?MINE_IMGS:MINE_LIBS)[idx][0],cat==='img'?'AI画廊':'设计图库');showView('idetail');};});}
+}
+document.querySelectorAll('#view-mine .mside-item').forEach(function(x){x.onclick=function(){renderMine(x.getAttribute('data-mcat'),'');};});
+document.querySelectorAll('#view-fav .mside-item').forEach(function(x){x.onclick=function(){renderFav(x.getAttribute('data-mcat'));};});
+document.querySelectorAll('.minetabs').forEach(function(box){
+  box.querySelectorAll('button').forEach(function(b){
+    b.onclick=function(){
+      box.querySelectorAll('button').forEach(function(x){x.classList.remove('active');});b.classList.add('active');
+      var t=b.getAttribute('data-mtab');
+      if(t==='publish')showView('mine');
+      else if(t==='fav')showView('fav');
+      else if(t==='settings')showView('settings');
+    };
+  });
+});
+document.getElementById('editProfile').onclick=function(){showView('settings');};
+document.getElementById('editProfile2').onclick=function(){showView('settings');};
+document.getElementById('backSet').onclick=function(){showView('mine');};
+document.getElementById('setSave').onclick=function(){toast('原型演示：资料已保存');};
+
+/* ===== 退出登录 + 重新登录 ===== */
+function openLogout(){document.getElementById('logoutModal').classList.add('open');}
+function closeLogout(){document.getElementById('logoutModal').classList.remove('open');}
+document.getElementById('logoutCancel').onclick=closeLogout;
+document.getElementById('logoutConfirm').onclick=function(){
+  closeLogout();
+  document.querySelector('.tb-user .uid').textContent='未登录';
+  document.querySelector('.tb-user .ava').textContent='?';
+  document.querySelector('.uhead .un').textContent='未登录';
+  document.getElementById('userBtn').classList.add('logged-out');
+  setTimeout(function(){document.getElementById('loginModal').classList.add('open');},350);
+};
+document.getElementById('loginClose').onclick=function(){document.getElementById('loginModal').classList.remove('open');};
+document.getElementById('loginModal').addEventListener('click',function(e){if(e.target===this)this.classList.remove('open');});
+document.getElementById('loginGo').onclick=function(){
+  document.getElementById('loginModal').classList.remove('open');
+  document.querySelector('.tb-user .uid').textContent='普通用户';
+  document.querySelector('.tb-user .ava').textContent='I';
+  document.querySelector('.uhead .un').textContent='普通用户';
+  document.getElementById('userBtn').classList.remove('logged-out');
+  toast('登录成功，欢迎回来');
+};
+
+/* ===== 在线工作流：节点连线 + 拖动 + 模型弹窗 + 生图 ===== */
+var WF_LINKS=[
+  ['wfCp',0,'wfKSam',0],
+  ['wfCp',1,'wfClipP',0],
+  ['wfCp',1,'wfClipN',0],
+  ['wfCp',2,'wfVae',1],
+  ['wfClipP',0,'wfKSam',1],
+  ['wfClipN',0,'wfKSam',2],
+  ['wfLat',0,'wfKSam',3],
+  ['wfKSam',0,'wfVae',0],
+  ['wfVae',0,'wfSave',0]
+];
+function drawWfLinks(){
+  var stage=document.getElementById('wfStage');
+  var sr=stage.getBoundingClientRect();
+  if(!sr.width)return;
+  var vbW=1000,vbH=760;
+  var svg=document.getElementById('wfLinks');
+  var d='';
+  WF_LINKS.forEach(function(l){
+    var sn=document.getElementById(l[0]);
+    var tn=document.getElementById(l[2]);
+    var s=sn?sn.querySelectorAll('.port.out')[l[1]]:null;
+    var t=tn?tn.querySelectorAll('.port.in')[l[3]]:null;
+    if(!s||!t)return;
+    var sr0=s.getBoundingClientRect(),tr0=t.getBoundingClientRect();
+    var x1=(sr0.left-sr.left+sr0.width/2)/sr.width*vbW;
+    var y1=(sr0.top-sr.top+sr0.height/2)/sr.height*vbH;
+    var x2=(tr0.left-sr.left+tr0.width/2)/sr.width*vbW;
+    var y2=(tr0.top-sr.top+tr0.height/2)/sr.height*vbH;
+    var mx=(x1+x2)/2;
+    d+='<path d="M'+x1+' '+y1+' C'+mx+' '+y1+','+mx+' '+y2+','+x2+' '+y2+'" stroke="#4E7AD6" stroke-width="2.5" fill="none"/>';
+  });
+  svg.setAttribute('viewBox','0 0 '+vbW+' '+vbH);
+  svg.innerHTML=d;
+}
+(function(){
+  var stage=document.getElementById('wfStage');
+  document.querySelectorAll('#wfStage .wfnode').forEach(function(nd){
+    nd.addEventListener('pointerdown',function(e){
+      if(e.target.closest('input,textarea,button,select'))return;
+      var r=nd.getBoundingClientRect(),sr=stage.getBoundingClientRect();
+      var ox=e.clientX-r.left,oy=e.clientY-r.top,moved=false;
+      function move(ev){
+        var x=ev.clientX-sr.left-ox,y=ev.clientY-sr.top-oy;
+        x=Math.max(0,Math.min(x,stage.clientWidth-nd.offsetWidth));
+        y=Math.max(0,Math.min(y,stage.clientHeight-nd.offsetHeight));
+        nd.style.left=x+'px';nd.style.top=y+'px';
+        nd.classList.add('dragging');moved=true;
+        drawWfLinks();
+      }
+      function up(){
+        window.removeEventListener('pointermove',move);
+        window.removeEventListener('pointerup',up);
+        nd.classList.remove('dragging');
+      }
+      window.addEventListener('pointermove',move);
+      window.addEventListener('pointerup',up);
+    });
+  });
+  window.addEventListener('resize',drawWfLinks);
+})();
+var WF_CPS=[['仓储仓库底模SDXL','SDXL 1.0','物流仓库写实'],['Qwen-Image 底模','Qwen-Image','中文理解强 · 开源'],['Flux.2 klein 底模','Flux.2','开源质量标杆'],['SDXL 1.0 底模','SDXL 1.0','生态最大'],['Flux.1 schnell 底模','Flux.1','快速出图'],['物流场景底模','SDXL 1.0','综合物流场景']];
+var WF_CPS_MINE=[['我的仓储底模','SDXL 1.0','自行上传'],['我的港口底模','Flux.2','自行上传']];
+function openWfCp(){
+  var modal=document.createElement('div');
+  modal.className='modal open';
+  modal.style.zIndex='300';
+  modal.innerHTML='<div class="mcard-modal" style="width:880px;max-width:94vw;">'+
+    '<div class="lmhead"><h3>选择CHECKPOINT</h3><span style="margin-left:auto;font-size:11px;color:var(--sub);">基础算法 1.5</span><button class="tgX">×</button></div>'+
+    '<div class="sm-bar"><button class="tb-btn orange active" data-wcp="official">官方</button><button class="tb-btn" data-wcp="mine">我的</button><span class="sm-sp">排序：<b>最新</b> ▾</span><span class="sm-sp">筛选 ▾</span><input class="sm-search" id="wfcpSearch" placeholder="搜索模型名称"><button class="tb-btn primary" id="wfcpGo">搜索</button></div>'+
+    '<div class="sm-tabs"><button class="active">CheckPoint</button></div>'+
+    '<div class="sm-grid" id="wfcpGrid"></div></div>';
+  document.body.appendChild(modal);
+  var wcpTab='official';
+  function renderCp(f){
+    var data=wcpTab==='official'?WF_CPS:WF_CPS_MINE;
+    var list=data.filter(function(m){return !f||m[0].toLowerCase().indexOf(f.toLowerCase())>-1;});
+    document.getElementById('wfcpGrid').innerHTML=list.map(function(m,i){
+      var corner=wcpTab==='official'?'<span class="corner-tag official">官方</span>':'<span class="corner-tag mine">我的</span>';
+      return '<div class="sm-card"><div class="sw" style="background:'+PALETTES[i%PALETTES.length]+';">'+corner+'<span class="smt">CheckPoint</span><span class="smv">'+m[1]+'</span></div><div class="smn">'+m[0]+'</div><div class="smd">'+m[2]+'</div><div class="smops"><span class="op orange" data-cp="'+m[0]+'">选择</span></div></div>';
+    }).join('');
+    document.querySelectorAll('#wfcpGrid [data-cp]').forEach(function(op){
+      op.onclick=function(){
+        document.getElementById('wfCp').querySelector('input').value=op.getAttribute('data-cp');
+        modal.remove();
+        toast('已选择模型：'+op.getAttribute('data-cp'));
+      };
+    });
+  }
+  renderCp('');
+  modal.querySelectorAll('.sm-bar button[data-wcp]').forEach(function(b){
+    b.onclick=function(){
+      modal.querySelectorAll('.sm-bar button[data-wcp]').forEach(function(x){x.classList.remove('active');x.classList.remove('orange');});
+      b.classList.add('active');b.classList.add('orange');
+      wcpTab=b.getAttribute('data-wcp');renderCp(document.getElementById('wfcpSearch').value);
+    };
+  });
+  modal.querySelector('.tgX').onclick=function(){modal.remove();};
+  document.getElementById('wfcpGo').onclick=function(){renderCp(document.getElementById('wfcpSearch').value);};
+  document.getElementById('wfcpSearch').addEventListener('keydown',function(e){if(e.key==='Enter')renderCp(this.value);});
+  modal.addEventListener('click',function(e){if(e.target===this)modal.remove();});
+}
+document.getElementById('wfCp').querySelector('.cpinput').onclick=openWfCp;
+document.querySelectorAll('#view-wfgen .wficon').forEach(function(b){
+  b.addEventListener('click',function(){
+    var t=b.getAttribute('title');
+    toast('原型演示：'+(t==='新建工作流'?'已新建空白工作流':(t==='保持当前工作流'?'已保持当前工作流':'已下载当前工作流 JSON 文件')));
+  });
+});
+document.getElementById('wfRun').onclick=function(){
+  var ph=document.getElementById('wfSavePrev');
+  ph.innerHTML='<div class="wfsave-ph"><div style="text-align:center;color:#9AA7BA;"><div style="width:22px;height:22px;border:2px solid #2A3446;border-top-color:#4E7AD6;border-radius:50%;margin:0 auto 8px;animation:spin .8s linear infinite;"></div>生成中...</div></div>';
+  setTimeout(function(){
+    var p=PALETTES[((Math.random()*PALETTES.length)|0)];
+    ph.innerHTML='<div class="wfsave-ph" style="border-style:solid;border-color:transparent;background:linear-gradient(135deg,'+p+',#7BA3EE);color:#fff;font-size:12px;font-weight:600;">仓储仓库 · 工作流成图<span class="wfai">AI生成</span></div>';
+    toast('工作流运行完成，图像已保存');
+  },2400);
+};
+
+/* ===== 工作流详情 ===== */
+var WF_DATAS=['物流生图工作流','仓库场景工作流','集装箱调色工作流','分拣动效工作流','冷链打光工作流','港口航拍工作流','货运车队工作流','质检标注工作流'];
+function renderWfDetail(name){
+  state.detailFrom=state.view;
+  document.getElementById('wfName').textContent=name;
+  document.getElementById('wfDetailTitle').textContent=name;
+  document.getElementById('wfMeta').innerHTML='<span>发布日期：2026-07-12 10:20:33</span><span>Workflow</span><span>物流场景</span>';
+  var priv=state.view==='mine';
+  document.getElementById('wfCmtBox').style.display=priv?'none':'';
+  document.getElementById('wfDlBtns').style.display=priv?'none':'';
+  var wfcr=document.querySelector('#view-wfdetail .mdcreator span:nth-child(2)');
+  if(wfcr)wfcr.textContent=priv?'仅自己可见':'管理员';
+  var pal=PALETTES[(name.length*5)%PALETTES.length];
+  var pal2=PALETTES[(name.length*5+2)%PALETTES.length];
+  document.getElementById('wfImg1').style.background=pal;
+  document.getElementById('wfImg2').style.background=pal2;
+  document.getElementById('wfIntro').textContent='面向物流行业的' + name + '，预设节点编排与参数，开箱即用，可在在线工作流中一键运行。包含 ' + ['7','9','12'][name.length%3] + ' 个节点：Checkpoint 加载 → 提示词编码 → K采样 → VAE解码 → 保存图像。';
+}
+document.getElementById('backWf').onclick=function(){showView(state.detailFrom||'workflow');};
+document.getElementById('wfRunGo').onclick=function(){toast('已跳转到在线工作流');showView('wfgen');};
+
+/* ===== 模型详情页 ===== */
+function renderMDetail(name,type1,type2){
+  state.detailFrom=state.view;
+  document.getElementById('mdName').textContent=name;
+  document.getElementById('mDetailTitle').textContent=name;
+  document.getElementById('mdMeta').innerHTML='<span>发布日期：2026-06-30 15:29:33</span>';
+  var priv=state.view==='mine';
+  document.getElementById('mdCreator').textContent=priv?('普通用户 · '+type1+' · 仅自己可见'):('管理员 · '+type1);
+  document.getElementById('mdCmtBox').style.display=priv?'none':'';
+  document.getElementById('mdDlBtns').style.display=priv?'none':'';
+  var pal=PALETTES[(name.length*7)%PALETTES.length];
+  var pal2=PALETTES[(name.length*7+3)%PALETTES.length];
+  document.getElementById('mdImg1').style.background=pal;
+  document.getElementById('mdImg2').style.background=pal2;
+  document.getElementById('mdIntro').textContent='面向物流行业的'+type1+'模型「'+name+'」，基于 '+type2+' 底模微调，聚焦仓储/港口/冷链等真实物流场景的光影与质感表现。推荐采样器 dpmp_2m + sgm_uniform，CFG 3、步数 30（推荐 CFG 5 / STEPS 40）。';
+}
+document.getElementById('backModel').addEventListener('click',function(){showView(state.detailFrom||'home');});
+document.getElementById('mdChatGo').addEventListener('click',function(){toast('已跳转到对话生图（含高级参数设置）');showView('chat');});
+
+/* ===== 图片详情页 ===== */
+var NEG_PROMPT='低质量，模糊，文字水印，多余的手指，变形的物体，构图混乱';
+function renderIDetail(name,sub){
+  state.detailFrom=state.view;
+  document.getElementById('iDetailTitle').textContent=name;
+  document.getElementById('idImgName').textContent=name;
+  var priv=state.view==='mine';
+  document.getElementById('idImg').style.background=PALETTES[(name.length*5)%PALETTES.length];
+  var pos='物流场景实拍风格，'+name+'，真实感，高清细节，自然光影';
+  document.getElementById('idPos').textContent=pos;
+  document.getElementById('idNeg').textContent=NEG_PROMPT;
+  document.getElementById('idParams').innerHTML=
+    '<div class="grow2"><span>采样方法 Sampler</span><b>dpmp_2m</b></div>'+
+    '<div class="grow2"><span>迭代步数 Steps</span><b>30</b></div>'+
+    '<div class="grow2"><span>提示词相关系数 CFG</span><b>5</b></div>'+
+    '<div class="grow2"><span>随机种子 Seed</span><b>884821</b></div>';
+  document.getElementById('idCmtBox').style.display=priv?'none':'';
+  document.getElementById('idCreatorRow').innerHTML=priv?'<span class="ava">I</span><span>仅自己可见</span>':'<span class="ava">I</span><span>管理员</span>';
+}
+document.getElementById('backImg').addEventListener('click',function(){showView(state.detailFrom||'home');});
+document.getElementById('idOneGo').addEventListener('click',function(){toast('已跳转到对话生图（含高级参数设置）');showView('chat');});
+document.getElementById('idCopy').addEventListener('click',function(){toast('原型演示：已复制全部提示词');});
+
+renderConvList();renderConv();
+})();
+</script>
+</body>
+</html>
